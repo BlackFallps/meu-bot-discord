@@ -101,20 +101,21 @@ async def on_ready():
 
 @bot.event
 async def on_guild_channel_create(channel):
-    # Filtra apenas para canais de ticket
+    # Verifica se é um canal de ticket
     if "ticket-" in channel.name.lower():
         await asyncio.sleep(3)
         
-        # 1. Busca automática do canal do painel principal
+        # 1. Busca automática do painel
         canal_painel = None
         for g_channel in channel.guild.text_channels:
             async for message in g_channel.history(limit=50):
+                # Procura pela mensagem que contém o título do seu painel
                 if message.author == bot.user and message.embeds and "🌾 FILA DA FAZENDA GOMES GIRARDI 🌾" in message.embeds[0].title:
                     canal_painel = g_channel
                     break
             if canal_painel: break
 
-        # 2. Se encontrar, envia APENAS UMA mensagem com o botão de link
+        # 2. Se encontrar o painel, envia apenas UMA mensagem com o botão de link
         if canal_painel:
             url = f"https://discord.com/channels/{channel.guild.id}/{canal_painel.id}"
             
@@ -124,7 +125,8 @@ async def on_guild_channel_create(channel):
                 color=discord.Color.brand_green()
             )
             
-            # Criamos a View e adicionamos o botão de link aqui dentro
+            # Criamos a View e adicionamos o botão de link manualmente
+            # Isso evita o erro de 'unexpected keyword argument'
             view = View(timeout=60)
             view.add_item(discord.ui.Button(
                 label="Clique Aqui", 
@@ -132,8 +134,10 @@ async def on_guild_channel_create(channel):
                 url=url
             ))
             
-            # Envia a mensagem e agenda a exclusão para manter a pasta limpa
+            # Envia a mensagem única
             msg = await channel.send(embed=embed, view=view)
+            
+            # Deleta a mensagem após 60 segundos para manter a pasta limpa
             await asyncio.sleep(60)
             try:
                 await msg.delete()
