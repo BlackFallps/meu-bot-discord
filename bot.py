@@ -29,7 +29,6 @@ class LembreteFilaView(View):
 
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="btn_entrar_lembrete")
     async def entrar(self, interaction: discord.Interaction, button: Button):
-        # Acessa as listas globais
         global fila_fazenda, fila_ids
         
         if interaction.user.id not in fila_ids:
@@ -38,15 +37,17 @@ class LembreteFilaView(View):
             
             await interaction.response.send_message("✅ Você entrou na fila com sucesso!", ephemeral=True)
             
-            # Tenta deletar a mensagem do lembrete
-            try:
-                await interaction.message.delete()
-            except:
-                pass
-                
-            # IMPORTANTE: Como o painel principal não sabe que a lista mudou, 
-            # você precisará apenas clicar no painel principal ou ele atualizará 
-            # na próxima vez que alguém interagir com ele.
+            # Tenta deletar o lembrete
+            try: await interaction.message.delete()
+            except: pass
+            
+            # --- NOVA LÓGICA DE ATUALIZAÇÃO ---
+            # O bot procura a mensagem do painel para atualizá-la
+            async for message in interaction.channel.history(limit=50):
+                if message.author == bot.user and "FILA DA FAZENDA" in message.content: # Ajuste conforme o título do seu painel
+                    # Cria uma nova instância do painel para atualizar a mensagem
+                    await message.edit(embed=PainelFilaView().gerar_embed(), view=PainelFilaView())
+                    break
         else:
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
 
