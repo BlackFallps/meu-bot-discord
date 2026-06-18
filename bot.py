@@ -22,16 +22,17 @@ fila_fazenda = []
 fila_ids = []
 
 # --- View do Botão de Redirecionamento ---
-class BotaoApagarERedirecionar(View):
+class BotaoRedirecionarInstantaneo(View):
     def __init__(self, url):
-        super().__init__(timeout=60)
+        super().__init__(timeout=None)
         self.url = url
 
     @discord.ui.button(label="Clique Aqui", style=discord.ButtonStyle.primary)
-    async def botao_clique(self, interaction: discord.Interaction, button: Button):
-        # 1. Envia o link para o usuário de forma privada (efêmera)
+    async def botao_clique(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # 1. Envia o link de forma privada (apenas para quem clicou)
         await interaction.response.send_message(f"Clique aqui para ir ao painel: {self.url}", ephemeral=True)
-        # 2. Deleta a mensagem principal imediatamente
+        
+        # 2. Deleta a mensagem do canal onde o botão estava
         try:
             await interaction.message.delete()
         except:
