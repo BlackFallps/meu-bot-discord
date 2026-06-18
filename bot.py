@@ -92,7 +92,7 @@ class PainelFilaView(View):
                         break
             
             if canal_encontrado:
-                await canal_encontrado.send(f"🌾 {member.mention} Sua Vaga na Fazenda Gomes Girardi foi liberada! Estamos Te Esperando No Condado...")
+                await canal_encontrado.send(f"{member.mention} **Sua Vaga na Fazenda Gomes Girardi** foi liberada! Estamos Te Esperando No Condado...")
                 await interaction.followup.send(f"✅ Vaga de {removido_nome} liberada e aviso enviado no canal {canal_encontrado.mention}!", ephemeral=True)
             else:
                 await interaction.followup.send(f"✅ Vaga de {removido_nome} liberada, mas não encontrei um canal de ticket ativo para este usuário.", ephemeral=True)
