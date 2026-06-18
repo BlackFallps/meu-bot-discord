@@ -21,7 +21,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 fila_fazenda = []
 fila_ids = []
 
-# --- View do Botão de Redirecionamento ---
+# --- View que apaga ao clicar e envia resposta efêmera com o link ---
 class BotaoRedirecionarInstantaneo(View):
     def __init__(self, url):
         super().__init__(timeout=None)
@@ -29,10 +29,9 @@ class BotaoRedirecionarInstantaneo(View):
 
     @discord.ui.button(label="Clique Aqui", style=discord.ButtonStyle.primary)
     async def botao_clique(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # 1. Envia o link de forma privada (apenas para quem clicou)
+        # Envia o link de forma privada (apenas para quem clicou)
         await interaction.response.send_message(f"Clique aqui para ir ao painel: {self.url}", ephemeral=True)
-        
-        # 2. Deleta a mensagem do canal onde o botão estava
+        # Deleta a mensagem do canal imediatamente
         try:
             await interaction.message.delete()
         except:
@@ -109,8 +108,7 @@ async def on_ready():
 @bot.event
 async def on_guild_channel_create(channel):
     if "ticket-" in channel.name.lower():
-        await asyncio.sleep(4) 
-        
+        # Sem sleep, envia imediatamente
         canal_painel = None
         for g_channel in channel.guild.text_channels:
             async for message in g_channel.history(limit=50):
@@ -123,12 +121,11 @@ async def on_guild_channel_create(channel):
             url = f"https://discord.com/channels/{channel.guild.id}/{canal_painel.id}"
             embed = discord.Embed(
                 title="Fila da Fazenda Gomes Girardi",
-                description="Clique abaixo para ser redirecionado ao painel.",
+                description="Olá! Seja bem-vindo(a). Clique abaixo para ser redirecionado ao painel.",
                 color=discord.Color.brand_green()
             )
-            
-            # Envia a mensagem com a nova View que apaga ao clicar
-            await channel.send(embed=embed, view=BotaoApagarERedirecionar(url))
+            # Envia o botão que se autodestrói ao clicar
+            await channel.send(embed=embed, view=BotaoRedirecionarInstantaneo(url))
 
 @bot.command()
 @commands.has_permissions(administrator=True)
