@@ -92,16 +92,10 @@ async def on_ready():
 @bot.event
 async def on_guild_channel_create(channel):
     if "ticket-" in channel.name.lower():
-        # Aumentamos o delay para 6 segundos para dar tempo de outros bots postarem
-        await asyncio.sleep(6)
+        # Aguarda o Ticket Tool enviar a mensagem primeiro
+        await asyncio.sleep(4) 
         
-        # 1. LIMPEZA: Deleta mensagens de outros bots antes de postar a nossa
-        async for message in channel.history(limit=10):
-            if message.author != bot.user:
-                try: await message.delete()
-                except: pass
-
-        # 2. Busca o canal do painel
+        # Busca o canal do painel principal
         canal_painel = None
         for g_channel in channel.guild.text_channels:
             async for message in g_channel.history(limit=50):
@@ -110,7 +104,7 @@ async def on_guild_channel_create(channel):
                     break
             if canal_painel: break
 
-        # 3. Envia APENAS a nossa mensagem
+        # Envia a mensagem com o botão (sem deletar mensagens do Ticket Tool)
         if canal_painel:
             url = f"https://discord.com/channels/{channel.guild.id}/{canal_painel.id}"
             embed = discord.Embed(
@@ -121,9 +115,10 @@ async def on_guild_channel_create(channel):
             view = View(timeout=60)
             view.add_item(discord.ui.Button(label="Clique Aqui", style=discord.ButtonStyle.link, url=url))
             
+            # Envia a mensagem do seu bot
             msg = await channel.send(embed=embed, view=view)
             
-            # Auto-deleta nossa mensagem após 60s para manter o canal limpo
+            # Deleta APENAS a mensagem do SEU bot após 60 segundos
             await asyncio.sleep(60)
             try: await msg.delete()
             except: pass
