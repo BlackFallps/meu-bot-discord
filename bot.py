@@ -21,12 +21,13 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 fila_fazenda = []
 fila_ids = []
 
-# --- Classe do Lembrete no Ticket ---
+# --- Classe do Lembrete no Ticket (Link Direto para o Canal) ---
 class LembreteFilaView(View):
     def __init__(self, guild_id, canal_painel_id):
         super().__init__(timeout=None)
-        self.guild_id = guild_id
-        self.canal_painel_id = canal_painel_id
+        # O estilo Link permite que o usuário seja levado direto ao canal
+        url = f"https://discord.com/channels/{guild_id}/{canal_painel_id}"
+        self.add_item(discord.ui.Button(label="Clique Aqui", style=discord.ButtonStyle.link, url=url))
 
     @discord.ui.button(label="Clique Aqui", style=discord.ButtonStyle.green, custom_id="btn_ir_painel")
     async def clicar(self, interaction: discord.Interaction, button: Button):
@@ -34,7 +35,7 @@ class LembreteFilaView(View):
         
         # Resposta de redirecionamento para o usuário
         await interaction.response.send_message(
-            f"✅ Você foi redirecionado pro painel da fila: [Clique aqui para ir ao Painel]({url})", 
+            f"**Você foi redirecionado pro painel da Fila** ✅", 
             ephemeral=True
         )
         
