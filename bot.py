@@ -31,9 +31,14 @@ class LembreteFilaView(View):
     @discord.ui.button(label="Clique Aqui", style=discord.ButtonStyle.green, custom_id="btn_ir_painel")
     async def clicar(self, interaction: discord.Interaction, button: Button):
         url = f"https://discord.com/channels/{self.guild_id}/{self.canal_painel_id}"
-        # Responde com o link de redirecionamento
-        await interaction.response.send_message(f"✅ Clique aqui para ir ao Painel: {url}", ephemeral=True)
-        # Apaga a mensagem do lembrete
+        
+        # Resposta de redirecionamento para o usuário
+        await interaction.response.send_message(
+            f"✅ Você foi redirecionado pro painel da fila: [Clique aqui para ir ao Painel]({url})", 
+            ephemeral=True
+        )
+        
+        # Apaga a mensagem do lembrete original
         try:
             await interaction.message.delete()
         except:
@@ -97,45 +102,4 @@ class PainelFilaView(View):
                     break
             if canal_encontrado:
                 await canal_encontrado.send(f"{member.mention} Sua Vaga na Fazenda Gomes Girardi foi liberada! Estamos Te Esperando No Condado...")
-                await interaction.followup.send(f"✅ Vaga de {removido_nome} liberada!", ephemeral=True)
-            else:
-                await interaction.followup.send(f"✅ Vaga de {removido_nome} liberada.", ephemeral=True)
-
-# --- Eventos ---
-@bot.event
-async def on_ready():
-    bot.add_view(PainelFilaView())
-    print(f"✅ {bot.user.name} online!")
-
-@bot.event
-async def on_guild_channel_create(channel):
-    if "ticket-" in channel.name.lower():
-        await asyncio.sleep(3)
-        
-        # Busca automática do canal do painel pelo título
-        canal_painel = None
-        for g_channel in channel.guild.text_channels:
-            async for message in g_channel.history(limit=50):
-                if message.author == bot.user and message.embeds and "🌾 FILA DA FAZENDA GOMES GIRARDI 🌾" in message.embeds[0].title:
-                    canal_painel = g_channel
-                    break
-            if canal_painel: break
-
-        embed = discord.Embed(
-            title="Fila da Fazenda Gomes Girardi",
-            description="Olá! Seja bem-vindo(a). Notamos que abriu uma pasta, Para mantermos a ordem na Fazenda devido à limitação de vagas, trabalhamos com uma fila de espera, Clique no Botão Abaixo Pra ir direto pro Painel onde você ira entrar na fila e assim que chegar a sua vez, você receberá uma notificação aqui na sua pasta...",
-            color=discord.Color.brand_green()
-        )
-        
-        if canal_painel:
-            view = LembreteFilaView(channel.guild.id, canal_painel.id)
-            await channel.send(embed=embed, view=view)
-
-@bot.command()
-@commands.has_permissions(administrator=True)
-async def fixarpainel(ctx):
-    await ctx.message.delete()
-    view = PainelFilaView()
-    await ctx.send(content="||@here||", embed=view.gerar_embed(), view=view)
-
-bot.run(os.environ['DISCORD_TOKEN'])
+                await interaction
