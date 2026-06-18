@@ -24,15 +24,13 @@ canal_painel_id = None
 
 # --- Classe do Lembrete no Ticket ---
 class LembreteFilaView(View):
-    def __init__(self):
+    def __init__(self, guild_id=None, canal_id=None):
         super().__init__(timeout=None)
-
-    @discord.ui.button(label="Ir para o Painel da Fila", style=discord.ButtonStyle.link, url="https://discord.com")
-    async def entrar(self, interaction: discord.Interaction, button: Button):
-        pass
-
-    def atualizar_link(self, guild_id, canal_id):
-        self.children[0].url = f"https://discord.com/channels/{guild_id}/{canal_id}"
+        if guild_id and canal_id:
+            url = f"https://discord.com/channels/{guild_id}/{canal_id}"
+            self.add_item(discord.ui.Button(label="Ir para o Painel da Fila", style=discord.ButtonStyle.link, url=url))
+        else:
+            self.add_item(discord.ui.Button(label="Painel (Não configurado)", style=discord.ButtonStyle.secondary, disabled=True))
 
 # --- Classe do Painel Principal ---
 class PainelFilaView(View):
@@ -111,9 +109,8 @@ async def on_guild_channel_create(channel):
             description="Olá! Seja bem-vindo(a). Notamos que abriu uma pasta, Para mantermos a ordem na Fazenda devido à limitação de vagas, trabalhamos com uma fila de espera, Clique no Botão Abaixo Pra ir direto pro Painel onde você ira entrar na fila e assim que chegar a sua vez, você receberá uma notificação aqui na sua pasta...",
             color=discord.Color.brand_green()
         )
-        view = LembreteFilaView()
-        if canal_painel_id:
-            view.atualizar_link(channel.guild.id, canal_painel_id)
+        # Passa os IDs para criar o botão dinâmico
+        view = LembreteFilaView(guild_id=channel.guild.id, canal_id=canal_painel_id)
         await channel.send(embed=embed, view=view)
 
 @bot.command()
