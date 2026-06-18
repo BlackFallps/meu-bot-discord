@@ -101,10 +101,11 @@ async def on_ready():
 
 @bot.event
 async def on_guild_channel_create(channel):
+    # Filtra apenas para canais de ticket
     if "ticket-" in channel.name.lower():
         await asyncio.sleep(3)
         
-        # Busca automática do canal do painel
+        # 1. Busca automática do canal do painel principal
         canal_painel = None
         for g_channel in channel.guild.text_channels:
             async for message in g_channel.history(limit=50):
@@ -113,21 +114,31 @@ async def on_guild_channel_create(channel):
                     break
             if canal_painel: break
 
+        # 2. Se encontrar, envia APENAS UMA mensagem com o botão de link
         if canal_painel:
             url = f"https://discord.com/channels/{channel.guild.id}/{canal_painel.id}"
             
             embed = discord.Embed(
                 title="Fila da Fazenda Gomes Girardi",
-                description="Olá! Seja bem-vindo(a). Notamos que abriu uma pasta. Para mantermos a ordem, clique abaixo para ir direto ao painel.",
+                description="Olá! Seja bem-vindo(a). Notamos que abriu uma pasta. Para mantermos a ordem, clique no botão abaixo para ir direto ao painel.",
                 color=discord.Color.brand_green()
             )
             
-            # Envia a view com o botão de link único e limpa em 60s
-            view = LembreteFilaView(url)
+            # Criamos a View e adicionamos o botão de link aqui dentro
+            view = View(timeout=60)
+            view.add_item(discord.ui.Button(
+                label="Clique Aqui", 
+                style=discord.ButtonStyle.link, 
+                url=url
+            ))
+            
+            # Envia a mensagem e agenda a exclusão para manter a pasta limpa
             msg = await channel.send(embed=embed, view=view)
             await asyncio.sleep(60)
-            try: await msg.delete()
-            except: pass
+            try:
+                await msg.delete()
+            except:
+                pass
 
 @bot.command()
 @commands.has_permissions(administrator=True)
