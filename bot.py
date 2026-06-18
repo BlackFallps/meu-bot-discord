@@ -21,6 +21,22 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 fila_fazenda = []
 fila_ids = []
 
+# --- View do Botão de Redirecionamento ---
+class BotaoApagarERedirecionar(View):
+    def __init__(self, url):
+        super().__init__(timeout=60)
+        self.url = url
+
+    @discord.ui.button(label="Clique Aqui", style=discord.ButtonStyle.primary)
+    async def botao_clique(self, interaction: discord.Interaction, button: Button):
+        # 1. Envia o link para o usuário de forma privada (efêmera)
+        await interaction.response.send_message(f"Clique aqui para ir ao painel: {self.url}", ephemeral=True)
+        # 2. Deleta a mensagem principal imediatamente
+        try:
+            await interaction.message.delete()
+        except:
+            pass
+
 # --- Classe do Painel ---
 class PainelFilaView(View):
     def __init__(self):
@@ -92,10 +108,8 @@ async def on_ready():
 @bot.event
 async def on_guild_channel_create(channel):
     if "ticket-" in channel.name.lower():
-        # Aguarda o Ticket Tool enviar a mensagem primeiro
         await asyncio.sleep(4) 
         
-        # Busca o canal do painel principal
         canal_painel = None
         for g_channel in channel.guild.text_channels:
             async for message in g_channel.history(limit=50):
@@ -104,24 +118,16 @@ async def on_guild_channel_create(channel):
                     break
             if canal_painel: break
 
-        # Envia a mensagem com o botão (sem deletar mensagens do Ticket Tool)
         if canal_painel:
             url = f"https://discord.com/channels/{channel.guild.id}/{canal_painel.id}"
             embed = discord.Embed(
                 title="Fila da Fazenda Gomes Girardi",
-                description="Olá! Seja bem-vindo(a). Clique no botão abaixo para ir direto ao painel.",
+                description="Clique abaixo para ser redirecionado ao painel.",
                 color=discord.Color.brand_green()
             )
-            view = View(timeout=60)
-            view.add_item(discord.ui.Button(label="Clique Aqui", style=discord.ButtonStyle.link, url=url))
             
-            # Envia a mensagem do seu bot
-            msg = await channel.send(embed=embed, view=view)
-            
-            # Deleta APENAS a mensagem do SEU bot após 60 segundos
-            await asyncio.sleep(60)
-            try: await msg.delete()
-            except: pass
+            # Envia a mensagem com a nova View que apaga ao clicar
+            await channel.send(embed=embed, view=BotaoApagarERedirecionar(url))
 
 @bot.command()
 @commands.has_permissions(administrator=True)
