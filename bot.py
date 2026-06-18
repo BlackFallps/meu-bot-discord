@@ -7,7 +7,7 @@ import json
 from flask import Flask
 from threading import Thread
 
-# 🌐 Configuração do Keep-Alive
+# Configuração Keep-Alive
 app = Flask('')
 @app.route('/')
 def home(): return "Bot Online 24/7!"
@@ -19,33 +19,27 @@ intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# --- SISTEMA DE PERSISTÊNCIA ---
-FILE_NAME = "fila_data.json"
+# Arquivos de persistência
+DATA_FILE = "dados_fila.json"
 
-def carregar_dados():
-    if os.path.exists(FILE_NAME):
+def get_data():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as f: return json.load(f)
+    return {"fila": [], "ids": [], "painel_msg_id": None, "painel_chan_id": None}
+
+def save_data(data):
+    with open(DATA_FILE, "w") as f: json.dump(data, f)
+
+# --- FUNÇÃO DE ATUALIZAÇÃO INSTANTÂNEA ---
+async def atualizar_painel_imediato():
+    data = get_data()
+    if data["painel_msg_id"] and data["painel_chan_id"]:
         try:
-            with open(FILE_NAME, "r") as f: return json.load(f)
+            chan = bot.get_channel(data["painel_chan_id"])
+            msg = await chan.fetch_message(data["painel_msg_id"])
+            await msg.edit(embed=PainelFilaView().gerar_embed(), view=PainelFilaView())
         except: pass
-    return {"fila": [], "ids": []}
 
-def salvar_dados(dados):
-    with open(FILE_NAME, "w") as f: json.dump(dados, f)
-
-# --- FUNÇÃO DE ATUALIZAÇÃO RÁPIDA ---
-async def atualizar_paineis():
-    dados = carregar_dados()
-    painel_view = PainelFilaView()
-    # Varre os canais para atualizar o embed do painel
-    for guild in bot.guilds:
-        for channel in guild.text_channels:
-            try:
-                async for message in channel.history(limit=20):
-                    if message.author == bot.user and message.embeds and "🌾 FILA DA FAZENDA GOMES GIRARDI 🌾" in message.embeds[0].title:
-                        await message.edit(content="||@here||", embed=painel_view.gerar_embed(), view=painel_view)
-            except: continue
-
-# --- Classes ---
 class LembreteFilaView(View):
     def __init__(self, canal):
         super().__init__(timeout=None)
@@ -53,89 +47,54 @@ class LembreteFilaView(View):
 
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="btn_entrar_lembrete")
     async def entrar(self, interaction: discord.Interaction, button: Button):
-        dados = carregar_dados()
-        if interaction.user.id not in dados["ids"]:
-            dados["fila"].append(interaction.user.display_name)
-            dados["ids"].append(interaction.user.id)
-            salvar_dados(dados)
-            
-            await interaction.response.send_message("✅ Você entrou na fila com sucesso!", ephemeral=True)
+        data = get_data()
+        if interaction.user.id not in data["ids"]:
+            data["fila"].append(interaction.user.display_name)
+            data["ids"].append(interaction.user.id)
+            save_data(data)
+            await interaction.response.send_message("✅ Registrado!", ephemeral=True)
             try: await interaction.message.delete()
             except: pass
-            
-            # Dispara a atualização sem esperar (sem delay para o usuário)
-            asyncio.create_task(atualizar_paineis())
-        else:
-            await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
+            # Atualiza sem varrer nada
+            await atualizar_painel_imediato()
+        else: await interaction.response.send_message("⚠️ Já está na fila!", ephemeral=True)
 
 class PainelFilaView(View):
     def __init__(self):
         super().__init__(timeout=None)
 
     def gerar_embed(self):
-        dados = carregar_dados()
-        embed = discord.Embed(
-            title="🌾 FILA DA FAZENDA GOMES GIRARDI 🌾",
-            description="Clique nos botões abaixo para gerenciar sua vaga na fila!",
-            color=discord.Color.brand_green()
-        )
-        embed.set_thumbnail(url="https://r2.fivemanage.com/W9vFnvRHli5f57dMM8AKy/FazendaGomes.png")
-        if dados["fila"]:
-            lista_nomes = "\n".join([f"🥇 **{nome}** *(Próximo a Ser Contratado)*" if i == 0 else f"{i+1}. {nome}" for i, nome in enumerate(dados["fila"])])
-            embed.add_field(name="Jogadores na Fila", value=lista_nomes, inline=False)
-        else:
-            embed.add_field(name="Jogadores na Fila", value="*Ninguém na fila por enquanto.*", inline=False)
-        embed.set_footer(text=f"Total: {len(dados['fila'])}")
+        data = get_data()
+        embed = discord.Embed(title="🌾 FILA DA FAZENDA GOMES GIRARDI 🌾", color=discord.Color.brand_green())
+        lista = "\n".join([f"🥇 **{nome}**" if i == 0 else f"{i+1}. {nome}" for i, nome in enumerate(data["fila"])]) if data["fila"] else "*Vazia*"
+        embed.add_field(name="Jogadores", value=lista)
+        embed.set_footer(text=f"Total: {len(data['fila'])}")
         return embed
 
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
     async def entrar(self, interaction: discord.Interaction, button: Button):
-        dados = carregar_dados()
-        if interaction.user.id not in dados["ids"]:
-            dados["fila"].append(interaction.user.display_name)
-            dados["ids"].append(interaction.user.id)
-            salvar_dados(dados)
-            await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
-        else: await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
-
-    @discord.ui.button(label="Sair da Fila", style=discord.ButtonStyle.red, custom_id="sair_fila")
-    async def sair(self, interaction: discord.Interaction, button: Button):
-        dados = carregar_dados()
-        if interaction.user.id in dados["ids"]:
-            idx = dados["ids"].index(interaction.user.id)
-            dados["fila"].pop(idx); dados["ids"].pop(idx)
-            salvar_dados(dados)
-            await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
-        else: await interaction.response.send_message("⚠️ Você não está na fila!", ephemeral=True)
-
-    @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
-    async def avancar(self, interaction: discord.Interaction, button: Button):
-        dados = carregar_dados()
-        if not dados["fila"]: return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
-        removido_nome = dados["fila"].pop(0); dados["ids"].pop(0)
-        salvar_dados(dados)
-        await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
-        
-        member = interaction.guild.get_member(dados["ids"][0] if dados["ids"] else None) # (Aviso opcional)
-        await interaction.followup.send(f"✅ Vaga de {removido_nome} liberada!", ephemeral=True)
+        data = get_data()
+        if interaction.user.id not in data["ids"]:
+            data["fila"].append(interaction.user.display_name)
+            data["ids"].append(interaction.user.id)
+            save_data(data)
+            await interaction.response.edit_message(embed=self.gerar_embed(), view=self)
+        else: await interaction.response.send_message("Já na fila!", ephemeral=True)
 
 @bot.event
 async def on_ready():
     bot.add_view(PainelFilaView())
     bot.add_view(LembreteFilaView(None))
-    print(f"✅ {bot.user.name} online!")
-
-@bot.event
-async def on_guild_channel_create(channel):
-    if "ticket-" in channel.name.lower():
-        await asyncio.sleep(2)
-        await channel.send("Entre na fila da Fazenda:", view=LembreteFilaView(channel))
+    print("✅ Bot Online!")
 
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def fixarpainel(ctx):
+    data = get_data()
+    msg = await ctx.send(embed=PainelFilaView().gerar_embed(), view=PainelFilaView())
+    data["painel_msg_id"] = msg.id
+    data["painel_chan_id"] = ctx.channel.id
+    save_data(data)
     await ctx.message.delete()
-    view = PainelFilaView()
-    await ctx.send(content="||@here||", embed=view.gerar_embed(), view=view)
 
 bot.run(os.environ['DISCORD_TOKEN'])
