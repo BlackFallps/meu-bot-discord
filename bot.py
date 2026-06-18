@@ -84,15 +84,25 @@ class PainelFilaView(View):
     async def atualizar(self, interaction: discord.Interaction):
         await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
 
-    @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
+    @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="btn_entrar_lembrete")
     async def entrar(self, interaction: discord.Interaction, button: Button):
         dados = carregar_dados()
         if interaction.user.id not in dados["ids"]:
             dados["fila"].append(interaction.user.display_name)
             dados["ids"].append(interaction.user.id)
             salvar_dados(dados)
-            await self.atualizar(interaction)
-        else: await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
+            
+            await interaction.response.send_message(f"✅ {interaction.user.name}, você entrou na fila!", ephemeral=True)
+            try: await interaction.message.delete()
+            except: pass
+            
+            # --- ATUALIZAÇÃO IMEDIATA SEM DELAY ---
+            # Em vez de varrer canais, editamos apenas o painel que já está na memória
+            # Se você tiver o ID da mensagem do painel, a edição é instantânea.
+            # Como alternativa rápida, vamos disparar a atualização em background:
+            asyncio.create_task(atualizar_todos_os_paineis())
+        else:
+            await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
 
     @discord.ui.button(label="Sair da Fila", style=discord.ButtonStyle.red, custom_id="sair_fila")
     async def sair(self, interaction: discord.Interaction, button: Button):
