@@ -97,15 +97,18 @@ async def on_ready():
 
 @bot.event
 async def on_guild_channel_create(channel):
+    # Verifica se é um canal de ticket
     if "ticket-" in channel.name.lower():
-        # Delay de 5 segundos para o Ticket Tool carregar (corrigido para 5)
+        # Aguarda 5 segundos para garantir que o canal está pronto
         await asyncio.sleep(5) 
         
-        # Trava de segurança: impede duplicatas verificando o histórico
+        # Trava de segurança: Verifica se já existe UMA mensagem sua no canal
+        # Isso impede que o bot envie mensagens repetidas se o evento disparar novamente
         async for message in channel.history(limit=10):
             if message.author == bot.user:
-                return # Já existe mensagem do bot, não envia de novo
+                return # Se já postou, não faz mais nada
 
+        # Busca o ID do canal onde o painel principal está (para gerar o link)
         canal_painel = None
         for g_channel in channel.guild.text_channels:
             async for message in g_channel.history(limit=50):
@@ -118,11 +121,11 @@ async def on_guild_channel_create(channel):
             url = f"https://discord.com/channels/{channel.guild.id}/{canal_painel.id}"
             embed = discord.Embed(
                 title="Fila da Fazenda Gomes Girardi",
-                description="Olá! Seja bem-vindo(a). Notamos que abriu uma pasta. Para mantermos a ordem, clique abaixo para ir direto ao painel.",
+                description="Olá! Seja bem-vindo(a). Notamos que abriu uma pasta. Para mantermos a ordem na Fazenda devido à limitação de vagas, trabalhamos com uma fila de espera. Clique no Botão Abaixo para ir direto pro Painel onde você irá entrar na fila e assim que chegar a sua vez, você receberá uma notificação aqui na sua Pasta...",
                 color=discord.Color.brand_green()
             )
             
-            # Envia a mensagem (agora sem deleção automática para ela ficar fixa)
+            # Envia APENAS a mensagem que você quer que apareça
             await channel.send(embed=embed, view=BotaoLinkView(url))
 
 @bot.command()
