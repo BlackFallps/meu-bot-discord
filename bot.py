@@ -25,8 +25,19 @@ fila_ids = []
 class LembreteFilaView(View):
     def __init__(self, guild_id, canal_painel_id):
         super().__init__(timeout=None)
-        url = f"https://discord.com/channels/{guild_id}/{canal_painel_id}"
-        self.add_item(discord.ui.Button(label="Clique Aqui", style=discord.ButtonStyle.link, url=url))
+        self.guild_id = guild_id
+        self.canal_painel_id = canal_painel_id
+
+    @discord.ui.button(label="Clique Aqui", style=discord.ButtonStyle.green, custom_id="btn_ir_painel")
+    async def clicar(self, interaction: discord.Interaction, button: Button):
+        url = f"https://discord.com/channels/{self.guild_id}/{self.canal_painel_id}"
+        # Responde com o link de redirecionamento
+        await interaction.response.send_message(f"✅ Clique aqui para ir ao Painel: {url}", ephemeral=True)
+        # Apaga a mensagem do lembrete
+        try:
+            await interaction.message.delete()
+        except:
+            pass
 
 # --- Classe do Painel Principal ---
 class PainelFilaView(View):
@@ -101,7 +112,7 @@ async def on_guild_channel_create(channel):
     if "ticket-" in channel.name.lower():
         await asyncio.sleep(3)
         
-        # Busca automática do canal do painel
+        # Busca automática do canal do painel pelo título
         canal_painel = None
         for g_channel in channel.guild.text_channels:
             async for message in g_channel.history(limit=50):
