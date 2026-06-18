@@ -20,20 +20,19 @@ intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # --- SISTEMA DE PERSISTÊNCIA ---
-DATA_FILE = "dados_fila.json"
+DATA_FILE = "fila_data.json"
 
 def get_data():
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r") as f: return json.load(f)
         except: pass
-    return {"fila": [], "ids": [], "painel_msg_id": None, "painel_chan_id": None}
+    return {"fila_nomes": [], "fila_ids": [], "painel_msg_id": None, "painel_chan_id": None}
 
 def save_data(data):
     with open(DATA_FILE, "w") as f: json.dump(data, f)
 
-# --- FUNÇÃO DE ATUALIZAÇÃO INSTANTÂNEA ---
-async def atualizar_painel_imediato():
+async def atualizar_painel_instantaneo():
     data = get_data()
     if data["painel_msg_id"] and data["painel_chan_id"]:
         try:
@@ -52,14 +51,14 @@ class LembreteFilaView(View):
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="btn_entrar_lembrete")
     async def entrar(self, interaction: discord.Interaction, button: Button):
         data = get_data()
-        if interaction.user.id not in data["ids"]:
-            data["fila"].append(interaction.user.display_name)
-            data["ids"].append(interaction.user.id)
+        if interaction.user.id not in data["fila_ids"]:
+            data["fila_nomes"].append(interaction.user.display_name)
+            data["fila_ids"].append(interaction.user.id)
             save_data(data)
             await interaction.response.send_message("✅ Você entrou na fila com sucesso!", ephemeral=True)
             try: await interaction.message.delete()
             except: pass
-            await atualizar_painel_imediato()
+            await atualizar_painel_instantaneo()
         else:
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
 
@@ -76,42 +75,52 @@ class PainelFilaView(View):
             color=discord.Color.brand_green()
         )
         embed.set_thumbnail(url="https://r2.fivemanage.com/W9vFnvRHli5f57dMM8AKy/FazendaGomes.png")
-        if data["fila"]:
-            lista_nomes = "\n".join([f"🥇 **{nome}** *(Próximo a Ser Contratado)*" if i == 0 else f"{i+1}. {nome}" for i, nome in enumerate(data["fila"])])
+        if data["fila_ids"]:
+            # Usando <@ID> para o nome ficar azul e clicável
+            lista_nomes = "\n".join([f"🥇 **<@{data['fila_ids'][i]}>** *(Próximo a Ser Contratado)*" if i == 0 else f"{i+1}. <@{data['fila_ids'][i]}>" for i in range(len(data['fila_ids']))])
             embed.add_field(name="Jogadores na Fila", value=lista_nomes, inline=False)
         else:
             embed.add_field(name="Jogadores na Fila", value="*Ninguém na fila por enquanto.*", inline=False)
-        embed.set_footer(text=f"Total: {len(data['fila'])}")
+        embed.set_footer(text=f"Total: {len(data['fila_ids'])}")
         return embed
+
+    async def atualizar(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
 
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
     async def entrar(self, interaction: discord.Interaction, button: Button):
         data = get_data()
-        if interaction.user.id not in data["ids"]:
-            data["fila"].append(interaction.user.display_name)
-            data["ids"].append(interaction.user.id)
+        if interaction.user.id not in data["fila_ids"]:
+            data["fila_nomes"].append(interaction.user.display_name)
+            data["fila_ids"].append(interaction.user.id)
             save_data(data)
-            await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
+            await self.atualizar(interaction)
         else: await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
 
     @discord.ui.button(label="Sair da Fila", style=discord.ButtonStyle.red, custom_id="sair_fila")
     async def sair(self, interaction: discord.Interaction, button: Button):
         data = get_data()
-        if interaction.user.id in data["ids"]:
-            idx = data["ids"].index(interaction.user.id)
-            data["fila"].pop(idx); data["ids"].pop(idx)
+        if interaction.user.id in data["fila_ids"]:
+            idx = data["fila_ids"].index(interaction.user.id)
+            data["fila_nomes"].pop(idx); data["fila_ids"].pop(idx)
             save_data(data)
-            await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
+            await self.atualizar(interaction)
         else: await interaction.response.send_message("⚠️ Você não está na fila!", ephemeral=True)
 
     @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def avancar(self, interaction: discord.Interaction, button: Button):
         data = get_data()
-        if not data["fila"]: return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
-        removido_nome = data["fila"].pop(0); data["ids"].pop(0)
+        if not data["fila_ids"]: return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
+        removido_id = data["fila_ids"].pop(0); data["fila_nomes"].pop(0)
         save_data(data)
-        await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
-        await interaction.followup.send(f"✅ Vaga de {removido_nome} liberada!", ephemeral=True)
+        await self.atualizar(interaction)
+        member = interaction.guild.get_member(removido_id)
+        if member:
+            for canal in interaction.guild.text_channels:
+                if "ticket-" in canal.name.lower():
+                    await canal.send(f"{member.mention} Sua Vaga na Fazenda Gomes Girardi foi liberada! Estamos Te Esperando No Condado...")
+                    break
+        await interaction.followup.send(f"✅ Vaga liberada!", ephemeral=True)
 
 @bot.event
 async def on_ready():
@@ -123,7 +132,8 @@ async def on_ready():
 async def on_guild_channel_create(channel):
     if "ticket-" in channel.name.lower():
         await asyncio.sleep(3)
-        await channel.send("Entre na fila da Fazenda:", view=LembreteFilaView(channel))
+        embed = discord.Embed(title="Fila da Fazenda Gomes Girardi", description="Olá! Seja bem-vindo(a). Notamos que abriu uma pasta...", color=discord.Color.brand_green())
+        await channel.send(embed=embed, view=LembreteFilaView(channel))
 
 @bot.command()
 @commands.has_permissions(administrator=True)
