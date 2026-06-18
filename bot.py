@@ -21,11 +21,10 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 fila_fazenda = []
 fila_ids = []
 
-# --- View com o botão de LINK (o que tem a seta) ---
+# --- View com o botão de LINK ---
 class BotaoLinkView(View):
     def __init__(self, url):
         super().__init__(timeout=None)
-        # Este estilo cria o botão com a seta de redirecionamento
         self.add_item(discord.ui.Button(label="Clique Aqui", style=discord.ButtonStyle.link, url=url))
 
 # --- Classe do Painel ---
@@ -99,9 +98,14 @@ async def on_ready():
 @bot.event
 async def on_guild_channel_create(channel):
     if "ticket-" in channel.name.lower():
-        # Delay de 2 segundos para o Ticket Tool carregar primeiro
-        await asyncio.sleep(3) 
+        # Delay de 5 segundos para o Ticket Tool carregar (corrigido para 5)
+        await asyncio.sleep(5) 
         
+        # Trava de segurança: impede duplicatas verificando o histórico
+        async for message in channel.history(limit=10):
+            if message.author == bot.user:
+                return # Já existe mensagem do bot, não envia de novo
+
         canal_painel = None
         for g_channel in channel.guild.text_channels:
             async for message in g_channel.history(limit=50):
@@ -118,15 +122,8 @@ async def on_guild_channel_create(channel):
                 color=discord.Color.brand_green()
             )
             
-            # Envia a mensagem com o botão de Link (com seta)
-            msg = await channel.send(embed=embed, view=BotaoLinkView(url))
-            
-            # Limpeza: Deleta a mensagem após 20 segundos automaticamente
-            await asyncio.sleep(20)
-            try:
-                await msg.delete()
-            except:
-                pass
+            # Envia a mensagem (agora sem deleção automática para ela ficar fixa)
+            await channel.send(embed=embed, view=BotaoLinkView(url))
 
 @bot.command()
 @commands.has_permissions(administrator=True)
