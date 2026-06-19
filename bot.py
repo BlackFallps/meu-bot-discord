@@ -62,11 +62,7 @@ class PainelFilaView(View):
         return embed
 
     async def atualizar(self, interaction: discord.Interaction):
-        # 1. Edita a mensagem principal mantendo o @here fixo
         await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
-        
-        # 2. Envia a notificação temporária que se auto-deleta
-        aviso = await interaction.channel.send("||@here||", delete_after=1)
 
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
     async def entrar(self, interaction: discord.Interaction, button: Button):
