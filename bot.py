@@ -99,24 +99,22 @@ async def on_ready():
 
 @bot.event
 async def on_guild_channel_create(channel):
-    # Verifica se o canal é um ticket
     if "ticket-" in channel.name.lower():
-        # Espera o bot de tickets terminar o processo
-        await asyncio.sleep(10) 
+        await asyncio.sleep(10) # Espera o Ticket Tool enviar a mensagem dele
         
-        # AQUI ESTÁ A MUDANÇA:
-        # Vamos deletar qualquer mensagem anterior do SEU bot (DarkBot)
-        # para evitar duplicidade, caso o código rode duas vezes.
+        # Verifica se o bot já enviou algo para não duplicar
         async for message in channel.history(limit=20):
             if message.author == bot.user:
-                await message.delete()
+                return 
 
-        # Agora enviamos APENAS o painel que você deseja
         canal_painel = bot.get_channel(ID_CANAL_PAINEL)
         if canal_painel:
             url = f"https://discord.com/channels/{channel.guild.id}/{canal_painel.id}"
             
-            # Este é o embed que você quer que apareça
+            # AQUI ESTÁ O SEGREDO: 
+            # Deixe APENAS o envio do embed que você gosta, 
+            # sem o channel.send com o texto de boas-vindas antes.
+            
             embed = discord.Embed(
                 title="Fila da Fazenda Gomes Girardi",
                 description="Olá! Notamos que abriu uma Pasta. Para mantermos a ordem na Fazenda, trabalhamos com uma fila de espera. Clique no Botão Abaixo para ir direto pro Painel.",
