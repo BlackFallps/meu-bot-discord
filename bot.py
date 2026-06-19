@@ -86,22 +86,30 @@ class PainelFilaView(View):
     # --- BOTÃO: LIBERAR VAGA ---
     @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def avancar(self, interaction: discord.Interaction, button: Button):
-        # 1. Validação de cargo
-        if not any(role.id in CARGOS_PERMITIDOS for role in interaction.user.roles):
-            return await interaction.response.send_message("❌ Apenas Gerentes ou Donos podem liberar a vaga!", ephemeral=True)
-        
-        # 2. Verifica se a fila está vazia
-        if not fila_jogadores:
-            # Esta é a mensagem "invisível" (ephemeral) quando a fila está vazia
-            return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
-        
-        # 3. Remove o primeiro jogador da fila
-        jogador = fila_jogadores.pop(0)
-        await self.atualizar(interaction)
-        
-        # 4. Envia a mensagem visível para todos no canal
-        # Isso fará com que a mensagem apareça como a da sua imagem de referência
-        await interaction.response.send_message(f"<@{jogador['id']}> **Sua Vaga na Fazenda Gomes Girardi foi liberada, Procure os Gerentes ou os Donos no Condado Pra ser Contratado!!**")
+        try:
+            # 1. Validação de cargo
+            tem_cargo = any(role.id in CARGOS_PERMITIDOS for role in interaction.user.roles)
+            if not tem_cargo:
+                return await interaction.response.send_message("❌ Você não tem o cargo de Gerente!", ephemeral=True)
+            
+            # 2. Verifica se a fila tem alguém
+            if not fila_jogadores:
+                return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
+            
+            # 3. Remove jogador
+            jogador = fila_jogadores.pop(0)
+            await self.atualizar(interaction)
+            
+            # 4. Envia mensagem pública
+            await interaction.channel.send(f"<@{jogador['id']}> **Sua vaga foi liberada! Procure um Gerente ou Dono.**")
+            
+            # 5. Resposta privada
+            await interaction.response.send_message("✅ Vaga liberada!", ephemeral=True)
+            
+        except Exception as e:
+            # SE DER QUALQUER ERRO, ISSO VAI TE AVISAR NO CANAL
+            await interaction.channel.send(f"⚠️ Ocorreu um erro: {str(e)}")
+            print(f"Erro no bot: {e}")
             
 # --- Eventos ---
 @bot.event
