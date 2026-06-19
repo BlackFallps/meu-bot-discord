@@ -18,7 +18,7 @@ intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# --- CONFIGURAÇÃO: COLOQUE AQUI O ID DO CANAL ONDE O PAINEL ESTÁ ---
+# --- CONFIGURAÇÃO ---
 ID_CANAL_PAINEL = 1477880103039144127
 
 fila_fazenda = []
@@ -46,14 +46,11 @@ class PainelFilaView(View):
         if fila_fazenda:
             lista_formatada = []
             for i, user_id in enumerate(fila_ids):
-                # Cria a menção clicável <@ID_DO_USUARIO>
                 mention = f"<@{user_id}>"
-                
                 if i == 0:
                     lista_formatada.append(f"🥇 **{mention}** *(Próximo a Ser Contratado)*")
                 else:
                     lista_formatada.append(f"{i+1}. {mention}")
-            
             embed.add_field(name="Jogadores na Fila", value="\n".join(lista_formatada), inline=False)
         else:
             embed.add_field(name="Jogadores na Fila", value="*Ninguém na fila por enquanto.*", inline=False)
@@ -63,9 +60,7 @@ class PainelFilaView(View):
 
     async def atualizar(self, interaction):
         await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
-        ping = await interaction.channel.send("||@here||")
-        await asyncio.sleep(0.2)
-        await ping.delete()
+        ping = await interaction.channel.send("||@here||", delete_after=1)
 
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
     async def entrar(self, interaction: discord.Interaction, button: Button):
@@ -101,7 +96,7 @@ class PainelFilaView(View):
                     canal_encontrado = canal
                     break
             if canal_encontrado:
-                await canal_encontrado.send(f"{member.mention} **Sua Vaga na Fazenda Gomes Girardi foi liberado, Procure os Gerentes ou os Donos no Condado Pra estar te Contratando!!**")
+                await canal_encontrado.send(f"{member.mention} **Sua Vaga na Fazenda Gomes Girardi foi liberada, Procure os Gerentes ou os Donos no Condado para estar te contratando!!**")
                 await interaction.followup.send(f"✅ Vaga de {removido_nome} liberada!", ephemeral=True)
 
 # --- Eventos ---
@@ -114,26 +109,18 @@ async def on_ready():
 async def on_guild_channel_create(channel):
     if "ticket-" in channel.name.lower():
         await asyncio.sleep(2) 
-        
-        # Verifica se o bot já enviou algo para não duplicar
         async for message in channel.history(limit=10):
             if message.author == bot.user:
                 return 
-
-        # Busca o canal do painel pelo ID configurado
         canal_painel = bot.get_channel(ID_CANAL_PAINEL)
-        
         if canal_painel:
             url = f"https://discord.com/channels/{channel.guild.id}/{canal_painel.id}"
             embed = discord.Embed(
                 title="Fila da Fazenda Gomes Girardi",
-                description="Olá Seja bem-vindo(a) Notamos que abriu uma Pasta, Para mantermos a ordem na Fazenda devido à limitação de vagas, trabalhamos com uma fila de espera, Clique no Botão Abaixo para ir direto pro Painel onde você irá entrar na fila e assim que chegar a sua vez, você receberá uma notificação aqui na sua Pasta...",
+                description="Olá Seja bem-vindo(a). Notamos que abriu uma Pasta. Para mantermos a ordem na Fazenda devido à limitação de vagas, trabalhamos com uma fila de espera. Clique no Botão Abaixo para ir direto pro Painel onde você irá entrar na fila.",
                 color=discord.Color.brand_green()
             )
-            # delete_after=60 remove a mensagem automaticamente após 1 minuto
             await channel.send(embed=embed, view=BotaoLinkView(url), delete_after=60)
-        else:
-            print(f"⚠️ ERRO: Canal do painel com ID {ID_CANAL_PAINEL} não encontrado.")
 
 @bot.command()
 @commands.has_permissions(administrator=True)
