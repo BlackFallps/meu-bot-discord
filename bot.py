@@ -19,7 +19,7 @@ intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # --- CONFIGURAÇÃO ---
-ID_CANAL_PAINEL = 1516284994711060631
+ID_CANAL_PAINEL = 1477880103039144127
 # Insira aqui os IDs dos cargos que podem liberar a vaga
 CARGOS_PERMITIDOS = [1281476884131090468, 1509877190995476610, 1281476884131090467]
 
