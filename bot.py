@@ -62,13 +62,13 @@ class PainelFilaView(View):
         return embed
 
     async def atualizar(self, interaction: discord.Interaction):
-        # 1. Edita a mensagem principal mantendo o ||@here|| no conteúdo
-        # Isso garante que ele nunca suma do painel.
-        await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
+        # 1. Envia a notificação temporária PRIMEIRO.
+        # Assim, ela é uma mensagem separada e não altera o estado da mensagem do painel.
+        aviso = await interaction.channel.send("||@here||", delete_after=1)
         
-        # 2. Envia a notificação temporária no canal (fora da mensagem principal)
-        # Ela aparece e se apaga em 1 segundo, sem afetar o painel acima.
-        aviso = await interaction.channel.send("@here", delete_after=1)
+        # 2. Edita a mensagem do painel para garantir que o @here fique fixo no topo.
+        # Usamos edit_original_response para garantir que a atualização do painel ocorra.
+        await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
         await asyncio.sleep(2)
         await interaction.edit_original_response(content=None, embed=self.gerar_embed(), view=self)
 
