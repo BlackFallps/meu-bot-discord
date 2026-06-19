@@ -63,7 +63,7 @@ class PainelFilaView(View):
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
     async def entrar(self, interaction: discord.Interaction, button: Button):
         if not any(j['id'] == interaction.user.id for j in fila_jogadores):
-            fila_jogadores.append({'id': interaction.user.id, 'canal': interaction.channel.id})
+            fila_jogadores.append({'id': interaction.user.id, 'canal_id': interaction.channel.id})
             await self.atualizar(interaction)
         else:
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
@@ -73,25 +73,24 @@ class PainelFilaView(View):
         global fila_jogadores
         fila_jogadores = [j for j in fila_jogadores if j['id'] != interaction.user.id]
         await self.atualizar(interaction)
+        await interaction.response.send_message("Você saiu da fila!", ephemeral=True)
 
     @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def avancar(self, interaction: discord.Interaction, button: Button):
         if not any(role.id in CARGOS_PERMITIDOS for role in interaction.user.roles):
-            return await interaction.response.send_message("Apenas Gerentes ou Donos podem liberar a vaga ❌", ephemeral=True)
-        
+            return await interaction.response.send_message("❌ Apenas Gerentes ou Donos podem liberar a vaga!", ephemeral=True)
         if not fila_jogadores:
             return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
-        
+
         jogador = fila_jogadores.pop(0)
         await self.atualizar(interaction)
         
-        canal_correto = interaction.guild.get_channel(jogador['canal'])
-        
-        if canal_correto:
-            await canal_correto.send(f"<@{jogador['id']}> **Sua Vaga na Fazenda Gomes Girardi foi liberada, Procure os Gerentes ou os Donos no Condado Pra ser Contratado!!**")
-            await interaction.followup.send(f"✅ Vaga de <@{jogador['id']}> liberada no canal do ticket!", ephemeral=True)
+        canal_ticket = interaction.guild.get_channel(jogador['canal_id'])
+        if canal_ticket:
+            await canal_ticket.send(f"<@{jogador['id']}> **Sua Vaga na Fazenda Gomes Girardi foi liberada, Procure os Gerentes ou os Donos no Condado Pra ser Contratado!!**")
+            await interaction.response.send_message("✅ Vaga liberada no canal do ticket do jogador!", ephemeral=True)
         else:
-            await interaction.followup.send(f"⚠️ Vaga liberada, mas o canal original do ticket não foi encontrado.", ephemeral=True)
+            await interaction.response.send_message("⚠️ Vaga liberada, mas não encontrei o canal do ticket original.", ephemeral=True)
 
 # --- Eventos ---
 @bot.event
