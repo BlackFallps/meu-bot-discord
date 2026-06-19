@@ -90,21 +90,18 @@ class PainelFilaView(View):
         if not any(role.id in CARGOS_PERMITIDOS for role in interaction.user.roles):
             return await interaction.response.send_message("❌ Apenas Gerentes ou Donos podem liberar a vaga!", ephemeral=True)
         
-        # 2. Verifica se há alguém na fila
+        # 2. Verifica se a fila está vazia
         if not fila_jogadores:
+            # Esta é a mensagem "invisível" (ephemeral) quando a fila está vazia
             return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
         
-        # 3. Remove o primeiro jogador
+        # 3. Remove o primeiro jogador da fila
         jogador = fila_jogadores.pop(0)
-        
-        # 4. Atualiza o painel para remover o jogador da lista visível
         await self.atualizar(interaction)
         
-        # 5. Resposta ao Gerente (Privada/Efêmera)
-        await interaction.response.send_message(f"✅ Vaga de <@{jogador['id']}> liberada com sucesso!", ephemeral=True)
-        
-        # 6. Notificação pública no canal para o jogador
-        await interaction.channel.send(f"<@{jogador['id']}> **Sua vaga foi liberada! Procure um Gerente ou Dono para ser contratado.**")
+        # 4. Envia a mensagem visível para todos no canal
+        # Isso fará com que a mensagem apareça como a da sua imagem de referência
+        await interaction.response.send_message(f"<@{jogador['id']}> **Sua Vaga na Fazenda Gomes Girardi foi liberada, Procure os Gerentes ou os Donos no Condado Pra ser Contratado!!**")
             
 # --- Eventos ---
 @bot.event
