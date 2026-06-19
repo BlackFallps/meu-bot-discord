@@ -99,28 +99,31 @@ async def on_ready():
 
 @bot.event
 async def on_guild_channel_create(channel):
-    # Apenas se for um canal de ticket
+    # Verifica se o canal é um ticket
     if "ticket-" in channel.name.lower():
-        # Aumentamos o tempo para 10 segundos para dar tempo do Ticket Tool terminar o serviço dele
+        # Espera o bot de tickets terminar o processo
         await asyncio.sleep(10) 
         
-        # Verifica no histórico dos últimos 20 itens se JÁ existe alguma mensagem 
-        # (seja do Ticket Tool ou do seu bot). 
-        # Se houver mensagens, significa que o ticket já foi inicializado.
+        # AQUI ESTÁ A MUDANÇA:
+        # Vamos deletar qualquer mensagem anterior do SEU bot (DarkBot)
+        # para evitar duplicidade, caso o código rode duas vezes.
         async for message in channel.history(limit=20):
-            if message.id: # Se existir QUALQUER mensagem no canal, encerra a função
-                return 
+            if message.author == bot.user:
+                await message.delete()
 
+        # Agora enviamos APENAS o painel que você deseja
         canal_painel = bot.get_channel(ID_CANAL_PAINEL)
-        
         if canal_painel:
             url = f"https://discord.com/channels/{channel.guild.id}/{canal_painel.id}"
+            
+            # Este é o embed que você quer que apareça
             embed = discord.Embed(
                 title="Fila da Fazenda Gomes Girardi",
-                description="Olá Seja bem-vindo(a). Notamos que abriu uma Pasta. Para mantermos a ordem na Fazenda devido à limitação de vagas, trabalhamos com uma fila de espera. Clique no Botão Abaixo para ir direto pro Painel onde você irá entrar na fila.",
+                description="Olá! Notamos que abriu uma Pasta. Para mantermos a ordem na Fazenda, trabalhamos com uma fila de espera. Clique no Botão Abaixo para ir direto pro Painel.",
                 color=discord.Color.brand_green()
             )
-            # A mensagem será enviada apenas se o canal estiver vazio (sem mensagens de outros bots)
+            
+            # Envia apenas o embed com o botão de link
             await channel.send(embed=embed, view=BotaoLinkView(url))
 @bot.command()
 @commands.has_permissions(administrator=True)
