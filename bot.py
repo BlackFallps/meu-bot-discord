@@ -63,6 +63,7 @@ class PainelFilaView(View):
 
    async def atualizar(self, interaction):
         await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
+       
         ping = await interaction.channel.send("||@here||")
         await asyncio.sleep(0.2)
         await ping.delete()
