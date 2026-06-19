@@ -62,9 +62,11 @@ class PainelFilaView(View):
         return embed
 
     async def atualizar(self, interaction: discord.Interaction):
-        # Edita a mensagem com o @here oculto
-        await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
-        # Aguarda 2 segundos e remove o conteúdo do @here
+        # Edita apenas o embed/view da mensagem principal
+        await interaction.response.edit_message(embed=self.gerar_embed(), view=self)
+        
+        # Envia a notificação temporária que se auto-deleta em 2 segundos
+        aviso = await interaction.channel.send("||@here||", delete_after=1)
         await asyncio.sleep(2)
         await interaction.edit_original_response(content=None, embed=self.gerar_embed(), view=self)
 
