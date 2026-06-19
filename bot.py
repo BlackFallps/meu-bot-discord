@@ -65,27 +65,46 @@ class PainelFilaView(View):
 
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
     async def entrar(self, interaction: discord.Interaction, button: Button):
-        if interaction.user.id not in fila_ids:
-            fila_fazenda.append(interaction.user.display_name)
-            fila_ids.append(interaction.user.id)
+        # Captura o ID do canal onde o botão foi clicado (o ticket do usuário)
+        canal_ticket_id = interaction.channel.id
+        
+        if not any(j['id'] == interaction.user.id for j in fila_jogadores):
+            # Salva o ID do canal onde o usuário está no momento
+            fila_jogadores.append({
+                'id': interaction.user.id, 
+                'nome': interaction.user.display_name, 
+                'canal': canal_ticket_id
+            })
             await self.atualizar(interaction)
+            await interaction.response.send_message("✅ Você entrou na fila a partir deste ticket!", ephemeral=True)
         else:
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
 
-    @discord.ui.button(label="Sair da Fila", style=discord.ButtonStyle.red, custom_id="sair_fila")
-    async def sair(self, interaction: discord.Interaction, button: Button):
-        if interaction.user.id in fila_ids:
-            idx = fila_ids.index(interaction.user.id)
-            fila_fazenda.pop(idx)
-            fila_ids.pop(idx)
-            await self.atualizar(interaction)
-        else:
-            await interaction.response.send_message("⚠️ Você não está na fila!", ephemeral=True)
-
     @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def avancar(self, interaction: discord.Interaction, button: Button):
-        if not fila_fazenda:
+        # 1. VERIFICAÇÃO DE CARGOS
+        user_roles = [role.id for role in interaction.user.roles]
+        if not any(role_id in CARGOS_PERMITIDOS for role_id in user_roles):
+            return await interaction.response.send_message(
+                "❌ Apenas Gerentes ou Donos podem liberar a vaga da Fazenda!", ephemeral=True
+            )
+
+        # 2. VERIFICAÇÃO DE FILA
+        if not fila_jogadores:
             return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
+        
+        # 3. LIBERAÇÃO DA VAGA
+        jogador = fila_jogadores.pop(0)
+        await self.atualizar(interaction)
+        
+        # Busca o canal exato que salvamos no momento que ele entrou
+        canal_correto = interaction.guild.get_channel(jogador['canal'])
+        
+        if canal_correto:
+            await canal_correto.send(f"<@{jogador['id']}> **Sua Vaga na Fazenda Gomes Girardi foi liberada, Procure os Gerentes ou os Donos no Condado Pra ser Contratado!!**")
+            await interaction.followup.send(f"✅ Vaga de {jogador['nome']} liberada no canal correto!", ephemeral=True)
+        else:
+            await interaction.followup.send(f"⚠️ Vaga liberada, mas o canal do ticket deste usuário não foi encontrado.", ephemeral=True)
         removido_nome = fila_fazenda.pop(0)
         removido_id = fila_ids.pop(0)
         await self.atualizar(interaction)
