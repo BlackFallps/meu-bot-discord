@@ -86,30 +86,21 @@ class PainelFilaView(View):
     # --- BOTÃO: LIBERAR VAGA ---
    @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def avancar(self, interaction: discord.Interaction, button: Button):
-        # 1. Verificação de permissão
         if not any(role.id in CARGOS_PERMITIDOS for role in interaction.user.roles):
             return await interaction.response.send_message("❌ Apenas Gerentes ou Donos podem liberar a vaga!", ephemeral=True)
-        
-        # 2. Verificação se a fila tem alguém
         if not fila_jogadores:
             return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
         
-        # 3. Remove o PRIMEIRO da fila (.pop(0)) - ISSO TIRA DA LISTA
         jogador = fila_jogadores.pop(0)
-        
-        # 4. Atualiza o painel para mostrar que a fila diminuiu
         await self.atualizar(interaction)
         
-        # 5. Busca o canal do ticket original
         canal_ticket = interaction.guild.get_channel(jogador['canal_id'])
-        
         if canal_ticket:
-            # Envia no canal do ticket
-            await canal_ticket.send(f"<@{jogador['id']}> **Sua Vaga na Fazenda Gomes Girardi foi liberada, Procure os Gerentes ou os Donos no Condado Pra ser Contratado!!**")
+            await canal_ticket.send(f"<@{jogador['id']}> **Sua Vaga na Fazenda foi liberada, Procure os Gerentes ou os Donos no Condado Pra ser Contratado!!**")
             await interaction.response.send_message(f"✅ Vaga de <@{jogador['id']}> liberada no canal do ticket!", ephemeral=True)
         else:
-            # Se o canal foi deletado
-            await interaction.response.send_message(f"✅ Vaga de <@{jogador['id']}> liberada! (Não encontrei o canal do ticket para enviar a notificação)", ephemeral=True)
+            await interaction.response.send_message(f"✅ Vaga de <@{jogador['id']}> liberada (canal original não encontrado).", ephemeral=True)
+            
 # --- Eventos ---
 @bot.event
 async def on_guild_channel_create(channel):
