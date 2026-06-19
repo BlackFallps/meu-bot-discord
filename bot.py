@@ -99,18 +99,29 @@ async def on_ready():
 
 @bot.event
 async def on_guild_channel_create(channel):
+    # Apenas se for um canal de ticket
     if "ticket-" in channel.name.lower():
-        await asyncio.sleep(10) # Espera o Ticket Tool terminar de falar
+        # Aumentamos o tempo para 10 segundos para dar tempo do Ticket Tool terminar o serviço dele
+        await asyncio.sleep(10) 
         
-        # A MUDANÇA: O bot agora verifica se já existe QUALQUER mensagem no canal.
-        # Se houver mensagens (do Ticket Tool ou qualquer outra), ele NÃO envia nada.
-        async for message in channel.history(limit=5):
-            if message.id: 
+        # Verifica no histórico dos últimos 20 itens se JÁ existe alguma mensagem 
+        # (seja do Ticket Tool ou do seu bot). 
+        # Se houver mensagens, significa que o ticket já foi inicializado.
+        async for message in channel.history(limit=20):
+            if message.id: # Se existir QUALQUER mensagem no canal, encerra a função
                 return 
 
-        view = PainelFilaView()
-        await channel.send(content="||@here||", embed=view.gerar_embed(), view=view)
-
+        canal_painel = bot.get_channel(ID_CANAL_PAINEL)
+        
+        if canal_painel:
+            url = f"https://discord.com/channels/{channel.guild.id}/{canal_painel.id}"
+            embed = discord.Embed(
+                title="Fila da Fazenda Gomes Girardi",
+                description="Olá Seja bem-vindo(a). Notamos que abriu uma Pasta. Para mantermos a ordem na Fazenda devido à limitação de vagas, trabalhamos com uma fila de espera. Clique no Botão Abaixo para ir direto pro Painel onde você irá entrar na fila.",
+                color=discord.Color.brand_green()
+            )
+            # A mensagem será enviada apenas se o canal estiver vazio (sem mensagens de outros bots)
+            await channel.send(embed=embed, view=BotaoLinkView(url))
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def fixarpainel(ctx):
