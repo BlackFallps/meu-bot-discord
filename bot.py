@@ -66,10 +66,7 @@ class PainelFilaView(View):
         canal_onde_clicou = interaction.channel.id
         
         if not any(j['id'] == interaction.user.id for j in fila_jogadores):
-            fila_jogadores.append({
-                'id': interaction.user.id, 
-                'canal_id': canal_onde_clicou
-            })
+            fila_jogadores.append({'id': interaction.user.id, 'canal_id': canal_onde_clicou})
             await self.atualizar(interaction)
             await interaction.response.send_message("✅ Você entrou na fila!", ephemeral=True)
         else:
@@ -84,7 +81,7 @@ class PainelFilaView(View):
         await interaction.response.send_message("Você saiu da fila!", ephemeral=True)
 
     # --- BOTÃO: LIBERAR VAGA ---
-   @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
+    @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def avancar(self, interaction: discord.Interaction, button: Button):
         if not any(role.id in CARGOS_PERMITIDOS for role in interaction.user.roles):
             return await interaction.response.send_message("❌ Apenas Gerentes ou Donos podem liberar a vaga!", ephemeral=True)
