@@ -60,6 +60,7 @@ class PainelFilaView(View):
         await asyncio.sleep(0.2)
         await ping.delete()
 
+    # --- BOTÃO: ENTRAR NA FILA ---
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
     async def entrar(self, interaction: discord.Interaction, button: Button):
         canal_onde_clicou = interaction.channel.id
@@ -74,7 +75,8 @@ class PainelFilaView(View):
             await self.atualizar(interaction)
         else:
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
-
+            
+    # --- BOTÃO: SAIR DA FILA ---
     @discord.ui.button(label="Sair da Fila", style=discord.ButtonStyle.red, custom_id="sair_fila")
     async def sair(self, interaction: discord.Interaction, button: Button):
         global fila_jogadores
@@ -82,7 +84,8 @@ class PainelFilaView(View):
         await self.atualizar(interaction)
         await interaction.response.send_message("Você saiu da fila!", ephemeral=True)
 
-    @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
+    # --- BOTÃO: LIBERAR VAGA ---
+   @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def avancar(self, interaction: discord.Interaction, button: Button):
         if not fila_fazenda:
             return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
