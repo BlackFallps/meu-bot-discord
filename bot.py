@@ -45,8 +45,9 @@ class PainelFilaView(View):
         
         if fila_jogadores:
             lista_formatada = []
-            for i, jogador in enumerate(fila_jogadores):
-                mention = f"<@{jogador['id']}>"
+            for i, jogador_id in enumerate(fila_jogadores):
+                # Aqui está a correção: usamos o jogador_id diretamente
+                mention = f"<@{jogador_id}>"
                 if i == 0:
                     lista_formatada.append(f"🥇 **{mention}** *(Próximo a Ser Contratado)*")
                 else:
