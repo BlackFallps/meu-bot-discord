@@ -70,7 +70,11 @@ class PainelFilaView(View):
         
         if not any(j['id'] == interaction.user.id for j in fila_jogadores):
             fila_jogadores.append({'id': interaction.user.id, 'canal_id': canal_onde_clicou})
+            
+            # 1. Responda primeiro para evitar o erro de "Interaction already responded"
             await interaction.response.send_message("✅ Você entrou na fila!", ephemeral=True)
+            
+            # 2. Atualize o painel depois
             await self.atualizar(interaction)
         else:
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
