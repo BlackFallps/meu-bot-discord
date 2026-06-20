@@ -59,8 +59,10 @@ class PainelFilaView(View):
         return embed
 
     async def atualizar(self, interaction):
-        # Corrigido: Editando a mensagem original para não criar spam
         await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
+        ping = await interaction.channel.send("||@here||")
+        await asyncio.sleep(0.2)
+        await ping.delete()
 
     # --- BOTÃO: ENTRAR ---
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
@@ -84,7 +86,6 @@ class PainelFilaView(View):
         else:
             await interaction.response.send_message("Você não está na fila.", ephemeral=True)
 
-    # --- BOTÃO: LIBERAR VAGA ---
     # --- BOTÃO: LIBERAR VAGA ---
     @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def liberar(self, interaction: discord.Interaction, button: Button):
