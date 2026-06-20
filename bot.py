@@ -85,29 +85,29 @@ class PainelFilaView(View):
 
     # --- BOTÃO: LIBERAR VAGA ---
    @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
-    async def avancar(self, interaction: discord.Interaction, button: Button):
+    async def avancar(self, interaction: discord.Interaction, button: discord.ui.Button):
         # 1. Validação de cargo
         if not any(role.id in CARGOS_PERMITIDOS for role in interaction.user.roles):
             return await interaction.response.send_message("❌ Apenas Gerentes ou Donos podem liberar a vaga!", ephemeral=True)
         
-        # 2. Verifica se a fila está vazia
+        # 2. Verifica fila
         if not fila_jogadores:
             return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
         
-        # 3. Remove o jogador da fila
+        # 3. Processamento
         jogador = fila_jogadores.pop(0)
         await self.atualizar(interaction)
         
-        # 4. Resposta ÚNICA para parar o loading do botão
+        # 4. Resposta efêmera para o gerente
         await interaction.response.send_message(f"✅ Vaga de <@{jogador['id']}> liberada com sucesso!", ephemeral=True)
         
-        # 5. Envio de DM separado (não usa interação, então não causa erro de resposta dupla)
+        # 5. Envio de DM para o jogador
         try:
             membro = interaction.guild.get_member(jogador['id'])
             if membro:
                 await membro.send(f"✅ **Sua Vaga na Fazenda Gomes Girardi foi liberada!** Procure os Gerentes ou os Donos no Condado para ser contratado.")
-        except Exception as e:
-            print(f"Erro ao enviar DM: {e}")
+        except Exception:
+            pass # Ignora erro se não conseguir enviar DM
             
 # --- Eventos ---
 @bot.event
