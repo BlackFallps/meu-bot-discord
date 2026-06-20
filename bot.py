@@ -58,15 +58,20 @@ class PainelFilaView(View):
         return embed
 
     async def atualizar(self, interaction):
-        # Atualiza a mensagem existente sem criar spam
+        # Edita a mensagem existente com a nova lista, sem enviar mensagens novas no canal
         await interaction.response.edit_message(embed=self.gerar_embed(), view=self)
 
     # --- BOTÃO: ENTRAR NA FILA ---
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
     async def entrar(self, interaction: discord.Interaction, button: Button):
+        # Verifica se o usuário já está na lista
         if not any(j['id'] == interaction.user.id for j in fila_jogadores):
             fila_jogadores.append({'id': interaction.user.id})
+            
+            # Responde de forma oculta (apenas o usuário que clicou vê)
             await interaction.response.send_message("✅ Você entrou na fila!", ephemeral=True)
+            
+            # Chama a função atualizar para redesenhar o embed com o nome
             await self.atualizar(interaction)
         else:
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
