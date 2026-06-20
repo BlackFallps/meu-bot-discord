@@ -54,7 +54,7 @@ class PainelFilaView(View):
                     lista_formatada.append(f"{i+1}. {mention}")
             embed.add_field(name="Jogadores na Fila", value="\n".join(lista_formatada), inline=False)
         else:
-            embed.add_field(name="Jogadores na Fila", value="*Ninguém na Fila por Enquanto...*", inline=False)
+            embed.add_field(name="Jogadores na Fila", value="*Ninguém na Fila por Enquanto.*", inline=False)
         embed.set_footer(text=f"Total: {len(fila_jogadores)}")
         return embed
 
