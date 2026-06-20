@@ -144,7 +144,7 @@ async def on_guild_channel_create(channel):
         url = f"https://discord.com/channels/{channel.guild.id}/{ID_CANAL_PAINEL}"
         embed = discord.Embed(
             title="Fila da Fazenda Gomes Girardi",
-            description="Olá Seja bem-vindo(a) Notamos que abriu uma Pasta, Para mantermos a ordem na Fazenda devido à limitação de vagas, Trabalhamos com uma fila de espera pra Ser Contratado no Condado, Clique no Botão Abaixo para ir direto pro Painel...",
+            description="Olá Seja Bem-Vindo(a) Notamos Que Abriu Uma Pasta, Para Mantermos a Ordem na Fazenda Devido à Limitação de Vagas, Trabalhamos Com Uma Fila de Espera pra Ser Contratado no Condado, Clique no Botão Abaixo para ir direto pro Painel...",
             color=discord.Color.brand_green()
         )
         await channel.send(embed=embed, view=BotaoLinkView(url), delete_after=60)
