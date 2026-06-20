@@ -103,7 +103,7 @@ class PainelFilaView(View):
         try:
             member = interaction.guild.get_member(removido_id)
             if member:
-                await member.send(f"✅ **Sua Vaga na Fazenda Gomes Girardi foi liberada!** Procure os Gerentes ou os Donos no Condado para ser contratado.")
+                await member.send(f"**Sua Vaga na Fazenda Gomes Girardi foi liberado,** Procure os Gerentes ou os Donos no Condado para ser contratado!!")
         except discord.Forbidden:
             print("Não foi possível enviar DM (o usuário bloqueou DMs ou não é do servidor).")
             
