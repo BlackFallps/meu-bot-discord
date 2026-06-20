@@ -61,23 +61,26 @@ class PainelFilaView(View):
         # Corrigido: Editando a mensagem original para não criar spam
         await interaction.response.edit_message(content="||@here||", embed=self.gerar_embed(), view=self)
 
-    # --- BOTÃO: ENTRAR NA FILA ---
+    # --- BOTÃO: ENTRAR ---
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
     async def entrar(self, interaction: discord.Interaction, button: Button):
-        if interaction.user.id not in fila_ids:
-            fila_fazenda.append(interaction.user.display_name)
-            fila_ids.append(interaction.user.id)
+        if interaction.user.id not in fila_jogadores:
+            fila_jogadores.append(interaction.user.id)
+            # A linha de send_message foi removida para não enviar aviso
             await self.atualizar(interaction)
         else:
+            # Mantive apenas este aviso de erro para você saber que já está na fila
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
-            
-    # --- BOTÃO: SAIR DA FILA ---
+
+    # --- BOTÃO: SAIR ---
     @discord.ui.button(label="Sair da Fila", style=discord.ButtonStyle.red, custom_id="sair_fila")
     async def sair(self, interaction: discord.Interaction, button: Button):
-        global fila_jogadores
-        fila_jogadores = [j for j in fila_jogadores if j['id'] != interaction.user.id]
-        await self.atualizar(interaction)
-        await interaction.response.send_message("Você saiu da fila!", ephemeral=True)
+        if interaction.user.id in fila_jogadores:
+            fila_jogadores.remove(interaction.user.id)
+            await self.atualizar(interaction)
+            # A linha de send_message foi removida
+        else:
+            await interaction.response.send_message("Você não está na fila.", ephemeral=True)
 
     # --- BOTÃO: LIBERAR VAGA ---
     @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
