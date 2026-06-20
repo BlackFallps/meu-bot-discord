@@ -112,7 +112,7 @@ class PainelFilaView(View):
     # --- BOTÃO: LIBERAR VAGA ---
     @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def liberar(self, interaction: discord.Interaction, button: Button):
-        # Verifica se o usuário possui algum dos cargos da lista CARGOS_PERMITIDOS
+        # 1. Verifica permissão
         if not any(role.id in CARGOS_PERMITIDOS for role in interaction.user.roles):
             return await interaction.response.send_message(
                 "Você Não Tem Permissão! Somente Gerentes ou Donos Podem Liberar Vagas ❌", 
@@ -124,10 +124,13 @@ class PainelFilaView(View):
         
         removido_id = fila_jogadores.pop(0)
         
-        # Resposta inicial editando o painel
+        # 2. Resposta inicial editando o painel
         await interaction.response.edit_message(embed=self.gerar_embed(), view=self)
         
-        # Envia a DM
+        # 3. Dispara o ping temporário em SEGUNDO PLANO (agora com a indentação correta)
+        asyncio.create_task(self.enviar_ping_temporario(interaction.channel))
+        
+        # 4. Envia a DM
         try:
             member = interaction.guild.get_member(removido_id)
             if member:
@@ -135,12 +138,8 @@ class PainelFilaView(View):
         except:
             pass
             
-        # Notificação de sucesso para o Gerente
-        await interaction.followup.send(f"Vaga de <@{removido_id}> liberado com Sucesso ✅", ephemeral=True)
-        
-        # 2. Dispara o ping temporário em segundo plano
-            # Usamos o canal da interação para enviar o @here
-            asyncio.create_task(self.enviar_ping_temporario(interaction.channel))
+        # 5. Notificação de sucesso para o Gerente
+        await interaction.followup.send(f"Vaga de <@{removido_id}> Liberado Com Sucesso ✅", ephemeral=True)
             
 # --- Eventos ---
 @bot.event
