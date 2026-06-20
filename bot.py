@@ -131,11 +131,14 @@ class PainelFilaView(View):
 @bot.event
 async def on_guild_channel_create(channel):
     if "ticket-" in channel.name.lower():
-        await asyncio.sleep(2)
+        await asyncio.sleep(2) 
+        async for message in channel.history(limit=10):
+            if message.author == bot.user:
+                return 
         url = f"https://discord.com/channels/{channel.guild.id}/{ID_CANAL_PAINEL}"
         embed = discord.Embed(
             title="Fila da Fazenda Gomes Girardi",
-            description="Olá Seja Bem-Vindo(a)! Trabalhamos com fila de espera, clique abaixo para acessar o painel.",
+            description="Olá Seja Bem-Vindo(a) Notamos Que Abriu Uma Pasta, Para Mantermos a Ordem na Fazenda Devido à Limitação de Vagas, Trabalhamos Com Uma Fila de Espera pra Ser Contratado no Condado, Clique no Botão Abaixo para ir direto pro Painel...",
             color=discord.Color.brand_green()
         )
         await channel.send(embed=embed, view=BotaoLinkView(url), delete_after=60)
