@@ -84,31 +84,30 @@ class PainelFilaView(View):
         await interaction.response.send_message("Você saiu da fila!", ephemeral=True)
 
     # --- BOTÃO: LIBERAR VAGA ---
-    @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
+   @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def avancar(self, interaction: discord.Interaction, button: Button):
         # 1. Validação de cargo
         if not any(role.id in CARGOS_PERMITIDOS for role in interaction.user.roles):
             return await interaction.response.send_message("❌ Apenas Gerentes ou Donos podem liberar a vaga!", ephemeral=True)
         
+        # 2. Verifica se a fila está vazia
         if not fila_jogadores:
             return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
         
-        # 2. Remove o jogador e atualiza o painel
+        # 3. Remove o jogador da fila
         jogador = fila_jogadores.pop(0)
         await self.atualizar(interaction)
         
-        # 3. Resposta EFÊMERA para o Gerente (Só ele vê a confirmação de que a vaga foi removida)
+        # 4. Resposta ÚNICA para parar o loading do botão
         await interaction.response.send_message(f"✅ Vaga de <@{jogador['id']}> liberada com sucesso!", ephemeral=True)
         
-        # 4. Envia DM para o jogador
+        # 5. Envio de DM separado (não usa interação, então não causa erro de resposta dupla)
         try:
             membro = interaction.guild.get_member(jogador['id'])
             if membro:
                 await membro.send(f"✅ **Sua Vaga na Fazenda Gomes Girardi foi liberada!** Procure os Gerentes ou os Donos no Condado para ser contratado.")
-                # Nota: Não usamos followup aqui para não gerar conflito com a resposta efêmera
-        except discord.Forbidden:
-            # Caso o usuário tenha bloqueado DMs, o bot não quebra
-            pass
+        except Exception as e:
+            print(f"Erro ao enviar DM: {e}")
             
 # --- Eventos ---
 @bot.event
