@@ -24,13 +24,11 @@ CARGOS_PERMITIDOS = [1465117225672249487, 1509877190995476610, 12814768841310904
 
 fila_jogadores = []
 
-# --- View com o botão de LINK ---
 class BotaoLinkView(View):
     def __init__(self, url):
         super().__init__(timeout=None)
         self.add_item(discord.ui.Button(label="Ir para o Painel", style=discord.ButtonStyle.link, url=url))
 
-# --- Classe do Painel ---
 class PainelFilaView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -42,7 +40,6 @@ class PainelFilaView(View):
             color=discord.Color.brand_green()
         )
         embed.set_thumbnail(url="https://r2.fivemanage.com/W9vFnvRHli5f57dMM8AKy/FazendaGomes.png")
-        
         if fila_jogadores:
             lista_formatada = []
             for i, jogador in enumerate(fila_jogadores):
@@ -63,23 +60,15 @@ class PainelFilaView(View):
         await asyncio.sleep(0.2)
         await ping.delete()
 
-# --- BOTÃO: ENTRAR NA FILA ---
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
     async def entrar(self, interaction: discord.Interaction, button: Button):
-        canal_onde_clicou = interaction.channel.id
-        
         if not any(j['id'] == interaction.user.id for j in fila_jogadores):
-            fila_jogadores.append({'id': interaction.user.id, 'canal_id': canal_onde_clicou})
-            
-            # 1. Responda primeiro para evitar o erro de "Interaction already responded"
+            fila_jogadores.append({'id': interaction.user.id})
             await interaction.response.send_message("✅ Você entrou na fila!", ephemeral=True)
-            
-            # 2. Atualize o painel depois
             await self.atualizar(interaction)
         else:
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
-            
-    # --- BOTÃO: SAIR DA FILA ---
+
     @discord.ui.button(label="Sair da Fila", style=discord.ButtonStyle.red, custom_id="sair_fila")
     async def sair(self, interaction: discord.Interaction, button: Button):
         global fila_jogadores
@@ -87,52 +76,27 @@ class PainelFilaView(View):
         await self.atualizar(interaction)
         await interaction.response.send_message("Você saiu da fila!", ephemeral=True)
 
-    # --- BOTÃO: LIBERAR VAGA ---
-   @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
+    @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def avancar(self, interaction: discord.Interaction, button: Button):
-        # Validação de cargo
         if not any(role.id in CARGOS_PERMITIDOS for role in interaction.user.roles):
             return await interaction.response.send_message("❌ Apenas Gerentes ou Donos podem liberar a vaga!", ephemeral=True)
-            
         if not fila_jogadores:
             return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
-        
-        # Remove o primeiro da fila
         jogador = fila_jogadores.pop(0)
-        
-        # 1. Responda à interação primeiro (isso evita o erro de "Interaction already responded")
-        await interaction.response.send_message(f"✅ Vaga de <@{jogador['id']}> liberada com sucesso!", ephemeral=True)
-        
-        # 2. Atualize o painel
+        await interaction.response.send_message(f"✅ Vaga de <@{jogador['id']}> liberada!", ephemeral=True)
         await self.atualizar(interaction)
-        
-        # 3. Envio da notificação no ticket
         member = interaction.guild.get_member(jogador['id'])
         if member:
-            canal_encontrado = None
-            for canal in interaction.guild.text_channels:
-                if "ticket-" in canal.name.lower():
-                    canal_encontrado = canal
-                    break
-            if canal_encontrado:
-                await canal_encontrado.send(f"{member.mention} **Sua Vaga na Fazenda Gomes Girardi foi liberada! Procure os Gerentes ou os Donos no Condado para ser contratado.**")
-            
-# --- Eventos ---
+            canal = discord.utils.get(interaction.guild.text_channels, name=f"ticket-{member.name.lower()}")
+            if canal:
+                await canal.send(f"{member.mention} **Sua Vaga foi liberada! Procure os Gerentes no Condado.**")
+
 @bot.event
 async def on_guild_channel_create(channel):
     if "ticket-" in channel.name.lower():
-        await asyncio.sleep(2) 
-        async for message in channel.history(limit=10):
-            if message.author == bot.user:
-                return 
+        await asyncio.sleep(2)
         url = f"https://discord.com/channels/{channel.guild.id}/{ID_CANAL_PAINEL}"
-        embed = discord.Embed(
-            title="Fila da Fazenda Gomes Girardi",
-            description="Olá Seja bem-vindo(a) Notamos que abriu uma Pasta, Para mantermos a ordem na Fazenda devido à limitação de vagas, Trabalhamos com uma fila de espera pra Ser Contratado no Condado, Clique no Botão Abaixo para ir direto pro Painel...",
-            color=discord.Color.brand_green()
-        )
-        
-        # Apenas esta linha deve existir:
+        embed = discord.Embed(title="Fila da Fazenda", description="Clique abaixo para entrar na fila:", color=discord.Color.brand_green())
         await channel.send(embed=embed, view=BotaoLinkView(url), delete_after=60)
 
 @bot.event
