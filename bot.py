@@ -63,18 +63,14 @@ class PainelFilaView(View):
         await asyncio.sleep(0.2)
         await ping.delete()
 
-# --- BOTÃO: ENTRAR NA FILA ---
+    # --- BOTÃO: ENTRAR NA FILA ---
     @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
     async def entrar(self, interaction: discord.Interaction, button: Button):
         canal_onde_clicou = interaction.channel.id
         
         if not any(j['id'] == interaction.user.id for j in fila_jogadores):
             fila_jogadores.append({'id': interaction.user.id, 'canal_id': canal_onde_clicou})
-            
-            # 1. Responda primeiro para evitar o erro de "Interaction already responded"
             await interaction.response.send_message("✅ Você entrou na fila!", ephemeral=True)
-            
-            # 2. Atualize o painel depois
             await self.atualizar(interaction)
         else:
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
@@ -88,14 +84,15 @@ class PainelFilaView(View):
         await interaction.response.send_message("Você saiu da fila!", ephemeral=True)
 
     # --- BOTÃO: LIBERAR VAGA ---
-   @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
+    @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
     async def avancar(self, interaction: discord.Interaction, button: Button):
-        if not fila_fazenda:
+        if not fila_jogadores:
             return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
-        removido_nome = fila_fazenda.pop(0)
-        removido_id = fila_ids.pop(0)
+        
+        jogador = fila_jogadores.pop(0)
         await self.atualizar(interaction)
-        member = interaction.guild.get_member(removido_id)
+        
+        member = interaction.guild.get_member(jogador['id'])
         if member:
             canal_encontrado = None
             for canal in interaction.guild.text_channels:
@@ -103,9 +100,9 @@ class PainelFilaView(View):
                     canal_encontrado = canal
                     break
             if canal_encontrado:
-                await canal_encontrado.send(f"{member.mention} **Sua Vaga na Fazenda Gomes Girardi foi liberado, Procure os Gerentes ou os Donos no Condado Pra ser Contratado!!**")
-                await interaction.followup.send(f"Vaga de {removido_nome} liberada ✅", ephemeral=True)
-            
+                await canal_encontrado.send(f"{member.mention} **Sua Vaga na Fazenda Gomes Girardi foi liberada, Procure os Gerentes ou os Donos no Condado Pra ser Contratado!!**")
+                await interaction.response.send_message(f"Vaga de <@{jogador['id']}> liberada ✅", ephemeral=True)
+
 # --- Eventos ---
 @bot.event
 async def on_guild_channel_create(channel):
@@ -120,8 +117,6 @@ async def on_guild_channel_create(channel):
             description="Olá Seja bem-vindo(a) Notamos que abriu uma Pasta, Para mantermos a ordem na Fazenda devido à limitação de vagas, Trabalhamos com uma fila de espera pra Ser Contratado no Condado, Clique no Botão Abaixo para ir direto pro Painel...",
             color=discord.Color.brand_green()
         )
-        
-        # Apenas esta linha deve existir:
         await channel.send(embed=embed, view=BotaoLinkView(url), delete_after=60)
 
 @bot.event
