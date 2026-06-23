@@ -40,8 +40,8 @@ async def lembrete_fatura():
         embed = discord.Embed(
             title="📢 EII, VOÇÊ JÁ DEIXOU TUDO ACERTADO COM A FAZENDA?",
             description=(
-                "Lembre-se de Verificar sua Fatura Semanal...\n\n"
-                "Procure um de nossos Gerentes ou Donos no Condado o Quanto Antes, Se você já realizou o pagamento, **Desconsidere Esta Mensagem** Agradecemos o seu Trabalho pela Fazenda!!"
+                "Lembre-se de Verificar sua Fatura Obrigatoria Semanal...\n\n"
+                "Procure um de nossos Gerentes ou Donos no Condado o Quanto Antes, Se você já realizou o pagamento, **DESCONSIDERE ESTA MENSAGEM** Agradecemos o seu Trabalho Pela Fazenda!!"
             ),
             color=cor_vermelho_escuro
         )
