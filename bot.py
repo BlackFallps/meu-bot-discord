@@ -33,14 +33,13 @@ async def lembrete_fatura():
         cor_vermelho_escuro = discord.Color.from_rgb(139, 0, 0)
         
         embed = discord.Embed(
-            # Título com emoji e negrito (estilo do seu exemplo)
-            title="⚠️ **LEMBRETE: FATURA SEMANAL DA FAZENDA**",
-            # O \n\n\n cria o espaçamento extra que você marcou em rosa
-            description="**Lembre-se da fatura semanal da Fazenda!**\n\nProcure um Gerente ou Dono no Condado para Efetuar o Pagamento e Manter tudo Acertado com a Fazenda 🤠\n\n\n",
+            # Título com emojis e negrito para maior destaque
+            title=" **📢 LEMBRETE: FATURA SEMANAL** ",
+            # Adicionei \n\n extra aqui para criar o espaçamento que você quer
+            description="**Lembre-se da Fatura Semanal da Fazenda...**\n\nProcure um Gerente ou Dono no Condado para Efetuar o Pagamento e Manter tudo Acertado com a Fazenda!!",
             color=cor_vermelho_escuro
         )
-        
-        # O footer fica naturalmente abaixo da description
+        # Adiciona um rodapé profissional
         embed.set_footer(text="©︎ Fazenda Gomes Girardi - Administração")
         await canal.send(embed=embed)
 
