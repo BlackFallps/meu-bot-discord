@@ -29,22 +29,22 @@ fila_jogadores = []
 async def lembrete_fatura():
     canal = bot.get_channel(1477880103039144127)
     if canal:
-        # Definindo um vermelho escuro (cor personalizada)
+        # 1. Envia o ping oculto primeiro
+        ping = await canal.send("||@here||")
+        await asyncio.sleep(0.1) # Espera um pouco para o Discord notificar
+        await ping.delete()      # Apaga a mensagem para ficar invisível
+        
+        # 2. Define a cor e o embed
         cor_vermelho_escuro = discord.Color.from_rgb(139, 0, 0)
         
         embed = discord.Embed(
-            # Título com emojis e negrito para maior destaque
-            title="📢 **𝙇𝙚𝙢𝙗𝙧𝙚𝙩𝙚: 𝙁𝙖𝙩𝙪𝙧𝙖 𝙎𝙚𝙢𝙖𝙣𝙖𝙡**",
-            # Adicionei os \n\n\n para o espaçamento que você pediu
-            description="**Lembre-se da Fatura Semanal da Fazenda...**\n\n\nProcure um Gerente ou Dono no Condado para Efetuar o Pagamento e Manter tudo Acertado com a Fazenda!!",
+            title="📢 **LEMBRETE: FATURA SEMANAL**",
+            description="**Lembre-se da Fatura Semanal da Fazenda...**\n\n\nProcure um Gerente ou Dono no Condado para Efetuar o Pagamento e Manter tudo Acertado com a Fazenda!!\n\n\n",
             color=cor_vermelho_escuro
         )
         
-        # Adiciona um rodapé profissional
         embed.set_footer(text="©︎ Fazenda Gomes Girardi - Administração")
-        
-        # O @here é enviado no 'content', logo acima do embed
-        await canal.send(content="||@here||", embed=embed)
+        await canal.send(embed=embed)
 
 @lembrete_fatura.before_loop
 async def before_lembrete():
