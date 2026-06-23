@@ -25,32 +25,31 @@ CARGOS_PERMITIDOS = [1281476884131090468, 1509877190995476610, 12814768841310904
 fila_jogadores = []
 
 # --- TAREFA DE LEMBRETE ---
-@tasks.loop(seconds=30) # Lembrar de trocar para hours=2 depois dos testes
+@tasks.loop(seconds=30) 
 async def lembrete_fatura():
     canal = bot.get_channel(1477880103039144127)
     if canal:
         # 1. Envia o ping oculto primeiro
         ping = await canal.send("||@here||")
-        await asyncio.sleep(0.1) # Espera um pouco para o Discord notificar
-        await ping.delete()      # Apaga a mensagem para ficar invisível
+        await asyncio.sleep(0.1) 
+        await ping.delete()      
         
         # 2. Define a cor e o embed
         cor_vermelho_escuro = discord.Color.from_rgb(139, 0, 0)
         
         embed = discord.Embed(
-    title="**📢 | Eii, você Já Deixou Tudo Acertado com a Fazenda?**",
-    description=(
-        "Não se esqueça de realizar o pagamento da sua Fatura Semanal. É muito importante manter suas obrigações em dia com a Fazenda.\n\n"
-        "Procure um de nossos Gerentes ou Donos no Condado o quanto antes. Se você já realizou o pagamento, **desconsidere esta mensagem**. Agradecemos o seu trabalho pela Fazenda!!"
-    ),
-    color=cor_vermelho_escuro
-) # <--- Este parêntese estava faltando no seu código original
-
-embed.set_footer(text="©︎ Fazenda Gomes Girardi - Administração")
+            title="📢 | Eii, você já deixou tudo Acertado com a Fazenda?",
+            description=(
+                "Lembre-se de Verificar sua Fatura Semanal...\n\n"
+                "É muito importante manter suas obrigações em dia com a Fazenda\n\n"
+                "Procure um de nossos Gerentes ou Donos no Condado o Quanto Antes, Se você já realizou o pagamento, **desconsidere esta mensagem**. Agradecemos o seu trabalho pela Fazenda!!"
+            ),
+            color=cor_vermelho_escuro
+        )
         
-        embed.set_footer(text="©︎ Fazenda Gomes Girardi - Administração")
+        embed.set_footer(text="© Fazenda Gomes Girardi - Administração")
         
-        # Adicionei a linha abaixo para enviar o embed que você criou:
+        # 3. Envia o embed
         await canal.send(embed=embed)
 
 @lembrete_fatura.before_loop
