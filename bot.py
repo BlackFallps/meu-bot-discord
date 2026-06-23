@@ -34,12 +34,12 @@ async def lembrete_fatura():
         
         embed = discord.Embed(
             # Título com emojis e negrito para maior destaque
-            title="🚨 **AVISO: FATURA SEMANAL** 🚨",
-            description="**Lembre-se da fatura semanal da Fazenda!**\n\nProcure um Gerente ou Dono no Condado para efetuar o pagamento e manter tudo acertado com a fazenda.",
+            title="📢 **AVISO: FATURA SEMANAL**",
+            description="**Lembre-se da Fatura Semanal da Fazenda...**\n\nProcure um Gerente ou Dono no Condado para Efetuar o Pagamento e Manter Tudo Acertado Com a Fazenda!!",
             color=cor_vermelho_escuro
         )
         # Adiciona um rodapé profissional
-        embed.set_footer(text="Fazenda Gomes Girardi - Administração")
+        embed.set_footer(text="© Fazenda Gomes Girardi - Administração")
         await canal.send(embed=embed)
 
 @lembrete_fatura.before_loop
