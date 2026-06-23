@@ -115,29 +115,33 @@ class PainelFilaView(View):
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
 
     # --- BOTÃO: SAIR ---
-    @discord.ui.button(label="Sair da Fila", style=discord.ButtonStyle.red, custom_id="sair_fila")
+    @discord.ui.button(label="Sair da Fila", style=discord.ButtonStyle.red, custom_id="sair_fila_novo")
     async def sair(self, interaction: discord.Interaction, button: Button):
-        # Verifica se é Administrador OU se tem um dos cargos permitidos
+        # 1. Verifica IDs dos cargos
+        cargos_usuario = [role.id for role in interaction.user.roles]
         eh_admin = interaction.user.guild_permissions.administrator
-        eh_gerente = any(role.id in CARGOS_PERMITIDOS for role in interaction.user.roles)
-        tem_permissao = eh_admin or eh_gerente
+        tem_cargo = any(role_id in CARGOS_PERMITIDOS for role_id in cargos_usuario)
         
-        # Caso 1: O usuário está na fila (comum)
+        # Isso vai aparecer no seu log do Render!
+        print(f"DEBUG SAIR: Usuário {interaction.user.name} | Admin: {eh_admin} | Tem Cargo: {tem_cargo} | Cargos: {cargos_usuario}")
+        
+        eh_gerente = eh_admin or tem_cargo
+        
         if interaction.user.id in fila_jogadores:
             fila_jogadores.remove(interaction.user.id)
             await interaction.response.edit_message(embed=self.gerar_embed(), view=self)
             
-        # Caso 2: Gerente clicou mas não está na fila -> Remove o 1º da fila
-        elif tem_permissao and fila_jogadores:
+        elif eh_gerente and fila_jogadores:
             removido_id = fila_jogadores.pop(0)
             await interaction.response.edit_message(embed=self.gerar_embed(), view=self)
-            # Como editamos a mensagem na resposta, não usamos followup aqui
-            # Criamos uma mensagem separada apenas para o gerente ver
             await interaction.followup.send(f"Gerente removeu <@{removido_id}> da fila. ✅", ephemeral=True)
             
-        # Caso 3: Não está na fila e não é gerente
         else:
-            await interaction.response.send_message("Você não está na fila ou não tem permissão para remover outros jogadores.", ephemeral=True)
+            # Mensagem mais informativa para você saber o que falhou
+            await interaction.response.send_message(
+                f"DEBUG: Admin={eh_admin}, CargoPermitido={tem_cargo}. Você não está na fila ou não tem permissão.", 
+                ephemeral=True
+            )
 
     # --- BOTÃO: LIBERAR VAGA ---
     @discord.ui.button(label="Liberar Vaga 1° da Fila", style=discord.ButtonStyle.blurple, custom_id="liberar_vaga")
