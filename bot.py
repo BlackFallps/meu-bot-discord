@@ -39,7 +39,7 @@ async def lembrete_fatura():
         
         embed = discord.Embed(
             title="📢 **𝐋𝐄𝐌𝐁𝐑𝐄𝐓𝐄: 𝐅𝐀𝐓𝐔𝐑𝐀 𝐒𝐄𝐌𝐀𝐍𝐀𝐋**",
-            description="**Lembre-se da Fatura Semanal da Fazenda...**\n\n\nProcure um Gerente ou Dono no Condado para Efetuar o Pagamento e Manter tudo Acertado com a Fazenda!!\n\n\n",
+            description="**Lembre-se da Fatura Semanal da Fazenda...**\n\n\nProcure um Gerente ou Dono no Condado para Efetuar o Pagamento e Manter tudo Acertado com a Fazenda!!",
             color=cor_vermelho_escuro
         )
         
