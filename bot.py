@@ -25,23 +25,40 @@ CARGOS_PERMITIDOS = [1281476884131090468, 1509877190995476610, 12814768841310904
 fila_jogadores = []
 
 # --- TAREFA DE LEMBRETE ---
-@tasks.loop(seconds=20) # Lembrar de trocar para hours=2 depois dos testes
+@tasks.loop(seconds=20) # Configurado para 20 segundos para teste
 async def lembrete_fatura():
     canal = bot.get_channel(1477880103039144127)
     if canal:
-        # Definindo um vermelho escuro (cor personalizada)
-        cor_vermelho_escuro = discord.Color.from_rgb(139, 0, 0)
+        # Vermelho escuro elegante (Firebrick)
+        cor_profissional = discord.Color.from_rgb(178, 34, 34)
         
         embed = discord.Embed(
-            # Título com emojis e negrito para maior destaque
-            title="📢 **AVISO: FATURA SEMANAL**",
-            description="**Lembre-se da Fatura Semanal da Fazenda...**\n\nProcure um Gerente ou Dono no Condado para Efetuar o Pagamento e Manter Tudo Acertado Com a Fazenda!!",
-            color=cor_vermelho_escuro
+            title="📅 **COMUNICADO: FATURA SEMANAL**",
+            description="Prezados, informamos que o período de faturamento semanal da **Fazenda Gomes Girardi** está aberto.",
+            color=cor_profissional
         )
-        # Adiciona um rodapé profissional
-        embed.set_footer(text="© Fazenda Gomes Girardi - Administração")
+        
+        # Estrutura com campos para facilitar a leitura
+        embed.add_field(
+            name="📋 Procedimento:",
+            value="Procure um de nossos Gerentes ou Donos no Condado para regularizar os débitos e garantir a continuidade das suas atividades.",
+            inline=False
+        )
+        embed.add_field(
+            name="⚠️ Observação:",
+            value="A regularização em dia é essencial para a manutenção da organização da nossa fazenda.",
+            inline=False
+        )
+        
+        # Identidade visual da Fazenda
+        embed.set_thumbnail(url="https://r2.fivemanage.com/W9vFnvRHli5f57dMM8AKy/FazendaGomes.png")
+        embed.set_footer(text="Fazenda Gomes Girardi | Gestão Administrativa")
+        
         await canal.send(embed=embed)
 
+@lembrete_fatura.before_loop
+async def before_lembrete():
+    await bot.wait_until_ready()
 @lembrete_fatura.before_loop
 async def before_lembrete():
     await bot.wait_until_ready()
