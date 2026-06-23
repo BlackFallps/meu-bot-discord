@@ -41,7 +41,7 @@ async def lembrete_fatura():
             title="📢 EII, VOÇÊ JÁ DEIXOU TUDO ACERTADO COM A FAZENDA?",
             description=(
                 "Lembre-se de Verificar sua Fatura Obrigatoria Semanal...\n\n"
-                "Procure um de nossos Gerentes ou Donos no Condado o Quanto Antes, Se você já realizou o pagamento, **DESCONSIDERE ESTA MENSAGEM** Agradecemos o seu Trabalho Pela Fazenda!!"
+                "Procure um de nossos Gerentes ou Donos no Condado o Quanto Antes, Se você Já Realizou o Pagamento, **DESCONSIDERE ESTA MENSAGEM** Agradecemos o seu Trabalho Pela Fazenda!!"
             ),
             color=cor_vermelho_escuro
         )
