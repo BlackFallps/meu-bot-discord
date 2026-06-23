@@ -43,11 +43,11 @@ async def lembrete_fatura():
             color=cor_vermelho_escuro
         )
         
-        # O segredo: Adicionar um campo vazio com um caractere invisível
-        # Isso cria o espaçamento exato que você quer antes do rodapé
+        # Campo invisível para forçar o espaçamento que você deseja
         embed.add_field(name="\u200b", value="\u200b", inline=False)
         
-        embed.set_footer(text="©︎ Fazenda Gomes Girardi - Administração"))
+        # LINHA CORRIGIDA (apenas um parêntese no final):
+        embed.set_footer(text="©︎ Fazenda Gomes Girardi - Administração")
 
 @lembrete_fatura.before_loop
 async def before_lembrete():
