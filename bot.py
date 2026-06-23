@@ -34,14 +34,17 @@ async def lembrete_fatura():
         
         embed = discord.Embed(
             # Título com emojis e negrito para maior destaque
-            title=" **📢 LEMBRETE: FATURA SEMANAL** ",
-            # Adicionei \n\n extra aqui para criar o espaçamento que você quer
-            description="**Lembre-se da Fatura Semanal da Fazenda...**\n\nProcure um Gerente ou Dono no Condado para Efetuar o Pagamento e Manter tudo Acertado com a Fazenda!!",
+            title="📢 **LEMBRETE: FATURA SEMANAL**",
+            # Adicionei os \n\n\n para o espaçamento que você pediu
+            description="**Lembre-se da Fatura Semanal da Fazenda...**\n\n\nProcure um Gerente ou Dono no Condado para Efetuar o Pagamento e Manter tudo Acertado com a Fazenda!!\n\n\n",
             color=cor_vermelho_escuro
         )
+        
         # Adiciona um rodapé profissional
         embed.set_footer(text="©︎ Fazenda Gomes Girardi - Administração")
-        await canal.send(embed=embed)
+        
+        # O @here é enviado no 'content', logo acima do embed
+        await canal.send(content="||@here||", embed=embed)
 
 @lembrete_fatura.before_loop
 async def before_lembrete():
