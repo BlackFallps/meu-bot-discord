@@ -6,6 +6,7 @@ import os
 import json 
 from flask import Flask
 from threading import Thread
+from datetime import datetime, timezone, timedelta, date
 
 # 🌐 Configuração do Keep-Alive
 app = Flask('')
@@ -40,32 +41,35 @@ def carregar_fila():
         except:
             fila_jogadores = []
 
-# --- TAREFA DE LEMBRETE ---
-@tasks.loop(hours=72) 
+   # --- TAREFA DE LEMBRETE (A CADA 3 DIAS, ÀS 22:00, COMEÇANDO EM 26/06/2026) ---
+@tasks.loop(minutes=1) 
 async def lembrete_fatura():
-    canal = bot.get_channel(1281476886232563774)
-    if canal:
-        # 1. Envia o ping oculto primeiro
-        ping = await canal.send("||@here||")
-        await asyncio.sleep(0.1) 
-        await ping.delete()      
-        
-        # 2. Define a cor e o embed
-        cor_vermelho_escuro = discord.Color.from_rgb(139, 0, 0)
-        
-        embed = discord.Embed(
-            title="📢 EII, VOÇÊ JÁ DEIXOU TUDO ACERTADO COM A FAZENDA?",
-            description=(
-                "Lembre-se de Verificar sua Fatura Obrigatoria Semanal...\n\n"
-                "Procure um de nossos Gerentes ou Donos no Condado o Quanto Antes, Se você Já Realizou o Pagamento, **DESCONSIDERE ESTA MENSAGEM** Agradecemos o seu Trabalho Pela Fazenda!!"
-            ),
-            color=cor_vermelho_escuro
-        )
-        
-        embed.set_footer(text="© Fazenda Gomes Girardi - Administração")
-        
-        # 3. Envia o embed
-        await canal.send(embed=embed)
+    data_inicio = date(2026, 6, 26)
+    fuso_brasilia = timezone(timedelta(hours=-3))
+    agora = datetime.now(fuso_brasilia)
+    
+    # Calcula quantos dias se passaram desde a data de início
+    diferenca = (agora.date() - data_inicio).days
+    
+    # Verifica se passou da data, se é múltiplo de 3 dias e se são 22:00
+    if agora.date() >= data_inicio and (diferenca % 3 == 0) and agora.hour == 22 and agora.minute == 0:
+        canal = bot.get_channel(1477880103039144127)
+        if canal:
+            ping = await canal.send("||@here||")
+            await asyncio.sleep(0.1) 
+            await ping.delete()      
+            
+            cor_vermelho_escuro = discord.Color.from_rgb(139, 0, 0)
+            embed = discord.Embed(
+                title="📢 EII, VOÇÊ JÁ DEIXOU TUDO ACERTADO COM A FAZENDA?",
+                description=(
+                    "Lembre-se de Verificar sua Fatura Obrigatoria Semanal...\n\n"
+                    "Procure um de Nossos Gerentes ou Donos no Condado o Quanto Antes, Se você Já Realizou o Pagamento, **DESCONSIDERE ESTA MENSAGEM** Agradecemos o seu Trabalho Pela Fazenda!!"
+                ),
+                color=cor_vermelho_escuro
+            )
+            embed.set_footer(text="© Fazenda Gomes Girardi - Administração")
+            await canal.send(embed=embed)
 
 @lembrete_fatura.before_loop
 async def before_lembrete():
