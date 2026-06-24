@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 from discord.ui import Button, View
 import asyncio
 import os
+import json 
 from flask import Flask
 from threading import Thread
 
@@ -21,8 +22,23 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # --- CONFIGURAÇÃO ---
 ID_CANAL_PAINEL = 1516284994711060631
 CARGOS_PERMITIDOS = [1281476884131090468, 1509877190995476610, 1281476884131090467]
+ARQUIVO_FILA = "fila.json"
 
+# --- LISTA E PERSISTÊNCIA ---
 fila_jogadores = []
+
+def salvar_fila():
+    with open(ARQUIVO_FILA, "w") as f:
+        json.dump(fila_jogadores, f)
+
+def carregar_fila():
+    global fila_jogadores
+    if os.path.exists(ARQUIVO_FILA):
+        try:
+            with open(ARQUIVO_FILA, "r") as f:
+                fila_jogadores = json.load(f)
+        except:
+            fila_jogadores = []
 
 # --- TAREFA DE LEMBRETE ---
 @tasks.loop(seconds=60) 
@@ -101,20 +117,21 @@ class PainelFilaView(View):
             print(f"Erro ao processar ping: {e}")
 
     # --- BOTÃO: ENTRAR ---
-    @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila")
+    @discord.ui.button(label="Entrar na Fila", style=discord.ButtonStyle.green, custom_id="entrar_fila_novo")
     async def entrar(self, interaction: discord.Interaction, button: Button):
         if interaction.user.id not in fila_jogadores:
+            # Ação de entrar na fila
             fila_jogadores.append(interaction.user.id)
+            salvar_fila() # <--- ADICIONADO
             
-            # Use edit_message apenas UMA vez
+            # Edita a mensagem com a nova fila e dispara o ping
             await interaction.response.edit_message(embed=self.gerar_embed(), view=self)
-            
-            # Remova o ping daqui se não for estritamente necessário, 
-            # ou garanta que ele não tente responder à interação novamente.
+            asyncio.create_task(self.enviar_ping_temporario(interaction.channel))
         else:
+            # Usuário já está na fila, apenas avisa sem atualizar tudo
             await interaction.response.send_message("⚠️ Você já está na fila!", ephemeral=True)
 
-    # --- BOTÃO: SAIR ---
+   # --- BOTÃO: SAIR ---
     @discord.ui.button(label="Sair da Fila", style=discord.ButtonStyle.red, custom_id="sair_fila_novo")
     async def sair(self, interaction: discord.Interaction, button: Button):
         # 1. Verifica IDs dos cargos
@@ -122,22 +139,26 @@ class PainelFilaView(View):
         eh_admin = interaction.user.guild_permissions.administrator
         tem_cargo = any(role_id in CARGOS_PERMITIDOS for role_id in cargos_usuario)
         
-        # Isso vai aparecer no seu log do Render!
-        print(f"DEBUG SAIR: Usuário {interaction.user.name} | Admin: {eh_admin} | Tem Cargo: {tem_cargo} | Cargos: {cargos_usuario}")
-        
         eh_gerente = eh_admin or tem_cargo
         
+        # Caso 1: O usuário está na fila (comum)
         if interaction.user.id in fila_jogadores:
             fila_jogadores.remove(interaction.user.id)
+            salvar_fila() # <--- ADICIONADO
             await interaction.response.edit_message(embed=self.gerar_embed(), view=self)
-            
+            asyncio.create_task(self.enviar_ping_temporario(interaction.channel))
+
+        # Caso 2: Gerente clicou mas não está na fila -> Remove o 1º da fila
         elif eh_gerente and fila_jogadores:
             removido_id = fila_jogadores.pop(0)
+            salvar_fila() # <--- ADICIONADO
             await interaction.response.edit_message(embed=self.gerar_embed(), view=self)
-            await interaction.followup.send(f"Voçê Removeu <@{removido_id}> Da Fila ✅", ephemeral=True)
+            await interaction.followup.send(f"Você Removeu <@{removido_id}> Da Fila ✅", ephemeral=True)
+            # Dispara o ping em segundo plano
+            asyncio.create_task(self.enviar_ping_temporario(interaction.channel))
             
+        # Caso 3: Não está na fila e não é gerente
         else:
-            # Mensagem mais informativa para você saber o que falhou
             await interaction.response.send_message(
                 f"DEBUG: Admin={eh_admin}, CargoPermitido={tem_cargo}. Você não está na fila ou não tem permissão.", 
                 ephemeral=True
@@ -157,13 +178,14 @@ class PainelFilaView(View):
             return await interaction.response.send_message("A fila está vazia!", ephemeral=True)
         
         removido_id = fila_jogadores.pop(0)
+        salvar_fila() # <--- ADICIONADO
         
-        # 2. Resposta inicial editando o painel
+        # 2. Resposta inicial editando o painel (Unificada)
         await interaction.response.edit_message(embed=self.gerar_embed(), view=self)
         
-        # 3. Dispara o ping temporário em SEGUNDO PLANO (agora com a indentação correta)
+        # 3. Dispara o ping temporário em SEGUNDO PLANO
         asyncio.create_task(self.enviar_ping_temporario(interaction.channel))
-        
+    
         # 4. Envia a DM
         try:
             member = interaction.guild.get_member(removido_id)
@@ -193,8 +215,9 @@ async def on_guild_channel_create(channel):
 
 @bot.event
 async def on_ready():
+    carregar_fila()
     bot.add_view(PainelFilaView())
-    lembrete_fatura.start() # <--- AJUSTE 3: Inicia o lembrete aqui!
+    lembrete_fatura.start()
     print(f"✅ {bot.user.name} online!")
 
 @bot.command()
