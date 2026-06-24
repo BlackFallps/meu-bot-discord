@@ -41,9 +41,9 @@ def carregar_fila():
             fila_jogadores = []
 
 # --- TAREFA DE LEMBRETE ---
-@tasks.loop(seconds=60) 
+@tasks.loop(minutes=2) 
 async def lembrete_fatura():
-    canal = bot.get_channel(1477880103039144127)
+    canal = bot.get_channel(1281476886232563774)
     if canal:
         # 1. Envia o ping oculto primeiro
         ping = await canal.send("||@here||")
